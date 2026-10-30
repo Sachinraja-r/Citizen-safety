@@ -125,8 +125,10 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsSubmittingSOS(false);
 
     // 3. Asynchronously request AI Triage in background without blocking UI
+    // Pass incidentId + correct field names to match Person 3's TriageRequest schema
     aiTriageService
       .analyzeEmergencyReport({
+        incidentId: incident.id,
         text: note,
         location: finalLocation,
         userId: user.id,

@@ -13,6 +13,16 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    proxy: {
+      // Proxy Person 3's AI engine during local development.
+      // This avoids CORS issues when both servers run on localhost.
+      // Production: set VITE_AI_ENGINE_URL to the deployed AI engine URL.
+      '/api/v1/ai-location': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path,
+      },
+    },
   },
   build: {
     sourcemap: true,

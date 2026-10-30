@@ -55,12 +55,18 @@ export interface IncidentEvent {
 }
 
 export interface AITriageSummary {
-  severityScore: number;
-  confidence: number;
-  summaryEn: string;
-  detectedLanguage?: string;
+  // Person 3 AI Engine canonical fields (mapped from TriageResult)
+  incidentType: 'MEDICAL' | 'HARASSMENT' | 'VIOLENCE' | 'ACCIDENT' | 'FIRE' | 'OTHER';
+  severityScore: number;       // 1–5 (mapped from severity)
+  confidence: number;          // 0.0–1.0
+  summaryEn: string;           // human-readable reason
+  detectedLanguage?: string;   // kn | hi | en | other
   recommendedAction?: string;
-  isLikelyFake?: boolean;
+  isLikelyFake?: boolean;      // mapped from spam_flag
+  possibleDuplicate?: boolean;
+  isFallback?: boolean;
+  medicalDisclaimer?: string;
+  triagedAt?: string;
 }
 
 export interface Incident {

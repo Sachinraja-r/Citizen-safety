@@ -298,39 +298,121 @@ export const ActiveIncidentPage: React.FC = () => {
       {/* Assigned Responder Unit Card */}
       <ResponderCard responder={incident.assignedResponder} />
 
-      {/* AI Triage Intelligence Enrichment (Member 3) */}
+      {/* AI Triage Intelligence Enrichment (Person 3 AI/ML Engine) */}
       {incident.aiTriage && (
         <div className="bg-white border border-[#F3D9E2] shadow-sm rounded-2xl p-4 text-left">
-          <div className="flex items-center justify-between mb-2">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-[#FFF5F8] rounded-lg text-[#E91E63] border border-[#F3D9E2]">
+              <div className="p-1.5 bg-[#FFF5F8] rounded-lg border border-[#F3D9E2]">
                 <Sparkles className="w-4 h-4 text-[#E91E63]" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-[#2D1B24]">AI Emergency Triage Insights</h4>
-                <p className="text-[10px] text-[#7A6570]">Processed by Member 3 AI Engine</p>
+                <h4 className="text-xs font-bold text-[#2D1B24]">AI Emergency Triage</h4>
+                <p className="text-[10px] text-[#7A6570]">Multilingual DistilBERT · Person 3 AI Engine</p>
               </div>
             </div>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-[#D81B60] bg-[#FFF5F8] px-2 py-0.5 rounded-full border border-[#F3D9E2]">
-              AI Suggestion • Unverified
-            </span>
+            <div className="flex flex-col items-end gap-1">
+              {incident.aiTriage.isFallback ? (
+                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                  Fallback Mode
+                </span>
+              ) : (
+                <span className="text-[9px] font-bold uppercase tracking-wider text-[#D81B60] bg-[#FFF5F8] px-2 py-0.5 rounded-full border border-[#F3D9E2]">
+                  AI Advisory
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="text-xs text-[#2D1B24] bg-[#FFF5F8] p-3 rounded-xl border border-[#F3D9E2] space-y-1.5">
+          {/* Incident Type Badge Row */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            {/* Incident Type Pill */}
+            {incident.aiTriage.incidentType && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                incident.aiTriage.incidentType === 'FIRE'      ? 'bg-red-50 text-red-700 border-red-200' :
+                incident.aiTriage.incidentType === 'MEDICAL'   ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                incident.aiTriage.incidentType === 'VIOLENCE'  ? 'bg-rose-50 text-rose-800 border-rose-200' :
+                incident.aiTriage.incidentType === 'ACCIDENT'  ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                incident.aiTriage.incidentType === 'HARASSMENT'? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                                  'bg-slate-50 text-slate-600 border-slate-200'
+              }`}>
+                {incident.aiTriage.incidentType === 'FIRE'       && '🔥'}
+                {incident.aiTriage.incidentType === 'MEDICAL'    && '🏥'}
+                {incident.aiTriage.incidentType === 'VIOLENCE'   && '⚠️'}
+                {incident.aiTriage.incidentType === 'ACCIDENT'   && '🚗'}
+                {incident.aiTriage.incidentType === 'HARASSMENT' && '🛡️'}
+                {incident.aiTriage.incidentType === 'OTHER'      && '📋'}
+                {' '}{incident.aiTriage.incidentType}
+              </span>
+            )}
+
+            {/* Severity Dots (1–5) */}
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((dot) => (
+                <span
+                  key={dot}
+                  className={`w-2.5 h-2.5 rounded-full ${
+                    dot <= incident.aiTriage!.severityScore
+                      ? incident.aiTriage!.severityScore >= 5 ? 'bg-red-600'
+                        : incident.aiTriage!.severityScore >= 4 ? 'bg-orange-500'
+                        : incident.aiTriage!.severityScore >= 3 ? 'bg-amber-500'
+                        : 'bg-emerald-500'
+                      : 'bg-[#F3D9E2]'
+                  }`}
+                />
+              ))}
+              <span className="text-[10px] text-[#7A6570] ml-1 font-medium">
+                Severity {incident.aiTriage.severityScore}/5
+              </span>
+            </div>
+
+            {/* Spam Flag Warning */}
+            {incident.aiTriage.isLikelyFake && (
+              <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                ⚠ Possible Test/Spam
+              </span>
+            )}
+
+            {/* Duplicate Flag */}
+            {incident.aiTriage.possibleDuplicate && (
+              <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                Possible Duplicate
+              </span>
+            )}
+          </div>
+
+          {/* AI Summary & Action */}
+          <div className="text-xs text-[#2D1B24] bg-[#FFF5F8] p-3 rounded-xl border border-[#F3D9E2] space-y-1.5 mb-2">
             <p>
-              <strong className="text-[#2D1B24]">Dispatcher Summary:</strong> {incident.aiTriage.summaryEn}
+              <strong className="text-[#2D1B24]">Analysis:</strong> {incident.aiTriage.summaryEn}
             </p>
             {incident.aiTriage.recommendedAction && (
               <p>
-                <strong className="text-[#D81B60]">Action Plan:</strong> {incident.aiTriage.recommendedAction}
+                <strong className="text-[#D81B60]">Recommended Action:</strong> {incident.aiTriage.recommendedAction}
               </p>
             )}
-            <div className="flex gap-2 text-[10px] text-[#7A6570] pt-1 font-medium">
-              <span>Severity: {incident.aiTriage.severityScore}/5</span>
-              <span>•</span>
+            <div className="flex flex-wrap gap-2 text-[10px] text-[#7A6570] pt-1 font-medium border-t border-[#F3D9E2]">
               <span>Confidence: {Math.round(incident.aiTriage.confidence * 100)}%</span>
+              {incident.aiTriage.detectedLanguage && (
+                <>
+                  <span>•</span>
+                  <span>Language: {
+                    incident.aiTriage.detectedLanguage === 'kn' ? 'Kannada 🇮🇳' :
+                    incident.aiTriage.detectedLanguage === 'hi' ? 'Hindi 🇮🇳' :
+                    incident.aiTriage.detectedLanguage === 'en' ? 'English' :
+                    incident.aiTriage.detectedLanguage.toUpperCase()
+                  }</span>
+                </>
+              )}
             </div>
           </div>
+
+          {/* Mandatory Medical Disclaimer */}
+          <p className="text-[9px] text-[#7A6570] italic leading-tight">
+            {incident.aiTriage.medicalDisclaimer ||
+              'AI severity is an advisory prioritization score and NOT a certified medical assessment.'}
+          </p>
         </div>
       )}
 
