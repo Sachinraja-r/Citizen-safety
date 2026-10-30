@@ -22,7 +22,10 @@ export const LoginPage: React.FC = () => {
   const handleGoogleLogin = async () => {
     setLocalError(null);
     try {
-      await loginWithGoogle();
+      const loggedUser = await loginWithGoogle();
+      if (loggedUser) {
+        navigate(loggedUser.isOnboarded ? '/app' : '/onboarding');
+      }
     } catch (err: unknown) {
       setLocalError((err as Error).message);
     }

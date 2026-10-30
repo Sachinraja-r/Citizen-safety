@@ -1,8 +1,29 @@
 import { supabase, isSupabaseConfigured } from './supabase';
+import { signInWithFirebaseGoogle, isFirebaseConfigured } from './firebase';
 import { UserProfile } from '../types';
 
 const DEMO_STORAGE_KEY = 'raksha_demo_session';
 const PROFILE_STORAGE_KEY = 'raksha_user_profile';
+
+function ensureValidUuid(id: string): string {
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return id;
+  }
+  // Deterministically map arbitrary ID (like Firebase UID) to UUID format
+  let hash1 = 5381;
+  let hash2 = 52711;
+  for (let i = 0; i < id.length; i++) {
+    const char = id.charCodeAt(i);
+    hash1 = ((hash1 << 5) + hash1) ^ char;
+    hash2 = ((hash2 << 5) + hash2) ^ char;
+  }
+  const p1 = Math.abs(hash1).toString(16).padStart(8, '0');
+  const p2 = Math.abs(hash2).toString(16).padStart(8, '0');
+  const p3 = Math.abs(hash1 ^ hash2).toString(16).padStart(8, '0');
+  const p4 = Math.abs(hash1 + hash2).toString(16).padStart(8, '0');
+  const raw = (p1 + p2 + p3 + p4).slice(0, 32);
+  return `${raw.slice(0, 8)}-${raw.slice(8, 12)}-4${raw.slice(13, 16)}-8${raw.slice(17, 20)}-${raw.slice(20, 32)}`;
+}
 
 const DEFAULT_DEMO_USER: UserProfile = {
   id: 'demo-user-101',
@@ -21,26 +42,46 @@ const DEFAULT_DEMO_USER: UserProfile = {
 export const authService = {
   isConfigured: isSupabaseConfigured,
 
-  async signInWithGoogle(): Promise<{ error: Error | null; url?: string }> {
-    if (!isSupabaseConfigured() || !supabase) {
-      return {
-        error: new Error('Supabase is not configured. Please supply VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY or switch to Demo Mode.'),
+  async signInWithGoogle(): Promise<{ user?: UserProfile | null; error: Error | null; url?: string }> {
+    // 1. If Firebase is configured, use Firebase Google Popup authentication
+    if (isFirebaseConfigured()) {
+      const { user: fbUser, error: fbErr } = await signInWithFirebaseGoogle();
+      if (fbErr) return { user: null, error: fbErr };
+      if (!fbUser) return { user: null, error: new Error('Google Sign-In was cancelled.') };
+
+      const uuid = ensureValidUuid(fbUser.uid);
+      const profile: UserProfile = {
+        id: uuid,
+        email: fbUser.email || '',
+        fullName: fbUser.displayName || 'Google Citizen',
+        isOnboarded: true,
+        createdAt: new Date().toISOString(),
       };
+
+      await this.saveProfile(profile);
+      return { user: profile, error: null };
     }
 
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/app`,
-        },
-      });
+    // 2. Otherwise try Supabase OAuth
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/app`,
+          },
+        });
 
-      if (error) throw error;
-      return { error: null, url: data.url };
-    } catch (err: unknown) {
-      return { error: err as Error };
+        if (error) throw error;
+        return { error: null, url: data.url };
+      } catch (err: unknown) {
+        return { error: err as Error };
+      }
     }
+
+    return {
+      error: new Error('Firebase Google Authentication is not configured. Please supply VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID.'),
+    };
   },
 
   async signInWithEmail(email: string, password: string): Promise<{ user: UserProfile | null; error: Error | null }> {

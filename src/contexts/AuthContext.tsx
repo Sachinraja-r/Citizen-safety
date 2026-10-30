@@ -7,7 +7,7 @@ interface AuthContextType {
   loading: boolean;
   isDemo: boolean;
   error: string | null;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => Promise<UserProfile | null>;
   loginDemo: (customProfile?: Partial<UserProfile>) => void;
   updateProfile: (profile: Partial<UserProfile>) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -36,18 +36,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (): Promise<UserProfile | null> => {
     setError(null);
     setLoading(true);
-    const { error: authErr, url } = await authService.signInWithGoogle();
+    const { user: profile, error: authErr, url } = await authService.signInWithGoogle();
     if (authErr) {
       setError(authErr.message);
       setLoading(false);
-      return;
+      return null;
+    }
+    if (profile) {
+      setUser(profile);
+      setIsDemo(false);
+      setLoading(false);
+      return profile;
     }
     if (url) {
       window.location.href = url;
     }
+    setLoading(false);
+    return null;
   };
 
   const loginDemo = (customProfile?: Partial<UserProfile>) => {
