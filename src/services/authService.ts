@@ -56,7 +56,8 @@ export const authService = {
       if (error) throw error;
       if (!data.user) throw new Error('No user returned');
 
-      const profile = await this.getUserProfile(data.user.id);
+      // Pass auth email so profile mapping can use it (profiles table has no email column)
+      const profile = await this.getUserProfile(data.user.id, data.user.email);
       return { user: profile, error: null };
     } catch (err: unknown) {
       return { user: null, error: err as Error };
@@ -113,7 +114,7 @@ export const authService = {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          const profile = await this.getUserProfile(session.user.id);
+          const profile = await this.getUserProfile(session.user.id, session.user.email);
           return {
             user: profile || {
               id: session.user.id,
@@ -143,7 +144,7 @@ export const authService = {
     return { user: null, isDemo: false };
   },
 
-  async getUserProfile(userId: string): Promise<UserProfile | null> {
+  async getUserProfile(userId: string, authEmail?: string): Promise<UserProfile | null> {
     if (isSupabaseConfigured() && supabase) {
       try {
         const { data, error } = await supabase
@@ -155,17 +156,18 @@ export const authService = {
         if (error) {
           console.warn('Error fetching Supabase profile, falling back to local cache:', error.message);
         } else if (data) {
+          // profiles table has no email column — source email from Supabase Auth (authEmail)
           return {
             id: data.id,
-            email: data.email,
-            fullName: data.full_name || data.fullName,
+            email: authEmail || '',
+            fullName: data.full_name || '',
             phone: data.phone,
             dateOfBirth: data.date_of_birth,
             bloodGroup: data.blood_group,
             allergies: data.allergies,
             medicalNotes: data.medical_notes,
             emergencyNotesShared: data.emergency_notes_shared ?? true,
-            isOnboarded: data.is_onboarded ?? true,
+            isOnboarded: data.is_onboarded ?? false,
             createdAt: data.created_at,
           };
         }
@@ -194,7 +196,7 @@ export const authService = {
       try {
         const { error } = await supabase.from('profiles').upsert({
           id: profile.id,
-          email: profile.email,
+          // Note: email lives in Supabase Auth only; profiles table has no email column
           full_name: profile.fullName,
           phone: profile.phone,
           date_of_birth: profile.dateOfBirth,
