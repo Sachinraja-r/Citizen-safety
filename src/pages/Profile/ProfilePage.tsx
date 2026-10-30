@@ -65,10 +65,10 @@ export const ProfilePage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-pink-600 block mb-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#D81B60] block mb-0.5">
             Citizen Account
           </span>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Profile &amp; Settings</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-[#2D1B24]">Profile &amp; Settings</h1>
         </div>
 
         <Button
@@ -90,45 +90,45 @@ export const ProfilePage: React.FC = () => {
       )}
 
       {/* Profile Card */}
-      <div className="bg-white border border-slate-200/90 shadow-sm rounded-2xl p-4">
+      <div className="bg-white border border-[#F3D9E2] shadow-sm rounded-2xl p-4">
         <div className="flex items-center gap-3.5 mb-4">
-          <div className="w-12 h-12 rounded-full bg-pink-100 text-pink-700 border border-pink-200 flex items-center justify-center font-bold text-lg shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-[#FFF5F8] text-[#D81B60] border border-[#F3D9E2] flex items-center justify-center font-bold text-lg shadow-xs">
             {user?.fullName?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">{user?.fullName || 'Citizen User'}</h3>
-            <p className="text-xs text-slate-500">{user?.email}</p>
-            <p className="text-xs font-mono text-slate-700 mt-0.5 font-medium">{user?.phone || 'No phone added'}</p>
+            <h3 className="text-base font-bold text-[#2D1B24]">{user?.fullName || 'Citizen User'}</h3>
+            <p className="text-xs text-[#7A6570]">{user?.email}</p>
+            <p className="text-xs font-mono text-[#2D1B24] mt-0.5 font-medium">{user?.phone || 'No phone added'}</p>
           </div>
         </div>
 
         {/* Medical & Emergency info */}
-        <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
+        <div className="pt-3 border-t border-[#F3D9E2] space-y-2 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Blood Group:</span>
-            <span className="font-bold text-pink-700 bg-pink-50 px-2 py-0.5 rounded border border-pink-200">
+            <span className="text-[#7A6570]">Blood Group:</span>
+            <span className="font-bold text-[#D81B60] bg-[#FFF5F8] px-2 py-0.5 rounded border border-[#F3D9E2]">
               {user?.bloodGroup || 'Not specified'}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Known Allergies:</span>
-            <span className="text-slate-700 font-medium">{user?.allergies || 'None reported'}</span>
+            <span className="text-[#7A6570]">Known Allergies:</span>
+            <span className="text-[#2D1B24] font-medium">{user?.allergies || 'None reported'}</span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Medical Notes:</span>
-            <span className="text-slate-700 font-medium">{user?.medicalNotes || 'None'}</span>
+            <span className="text-[#7A6570]">Medical Notes:</span>
+            <span className="text-[#2D1B24] font-medium">{user?.medicalNotes || 'None'}</span>
           </div>
         </div>
       </div>
 
       {/* Location Diagnostics Card */}
-      <div className="bg-white border border-slate-200/90 shadow-sm rounded-2xl p-4 space-y-3">
+      <div className="bg-white border border-[#F3D9E2] shadow-sm rounded-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-pink-600" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+            <MapPin className="w-4 h-4 text-[#E91E63]" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#2D1B24]">
               GPS Location Diagnostics
             </h3>
           </div>
@@ -143,14 +143,14 @@ export const ProfilePage: React.FC = () => {
           </span>
         </div>
 
-        <p className="text-xs text-slate-500 leading-relaxed">
+        <p className="text-xs text-[#7A6570] leading-relaxed">
           The browser Geolocation API supplies GPS coordinates to arriving units. PWAs cannot force device hardware GPS on automatically if disabled in OS settings.
         </p>
 
         {location && (
-          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-700">
+          <div className="bg-[#FFF5F8] p-2.5 rounded-xl border border-[#F3D9E2] text-xs font-mono text-[#2D1B24]">
             Latitude: {location.latitude.toFixed(6)} | Longitude: {location.longitude.toFixed(6)}
-            {accuracy && <div className="text-[11px] text-slate-500 mt-1 font-sans">Accuracy: ±{accuracy} meters</div>}
+            {accuracy && <div className="text-[11px] text-[#7A6570] mt-1 font-sans">Accuracy: ±{accuracy} meters</div>}
           </div>
         )}
 
@@ -160,15 +160,15 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* PWA Installation Card */}
-      <div className="bg-white border border-slate-200/90 shadow-sm rounded-2xl p-4">
+      <div className="bg-white border border-[#F3D9E2] shadow-sm rounded-2xl p-4">
         <div className="flex items-center gap-2.5 mb-2">
-          <Download className="w-4 h-4 text-pink-600" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+          <Download className="w-4 h-4 text-[#E91E63]" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#2D1B24]">
             Progressive Web App (PWA)
           </h3>
         </div>
 
-        <p className="text-xs text-slate-500 leading-relaxed mb-3">
+        <p className="text-xs text-[#7A6570] leading-relaxed mb-3">
           Install Raksha on your home screen for rapid 1-touch access during emergencies without opening browser tabs.
         </p>
 
@@ -177,19 +177,19 @@ export const ProfilePage: React.FC = () => {
             <CheckCircle2 className="w-4 h-4 text-emerald-600" /> App is installed in standalone mode
           </div>
         ) : isInstallable ? (
-          <Button size="sm" variant="primary" className="w-full font-bold shadow-md shadow-pink-500/25" onClick={triggerInstall}>
+          <Button size="sm" variant="primary" className="w-full font-bold shadow-md shadow-[#E91E63]/25" onClick={triggerInstall}>
             Install App to Home Screen
           </Button>
         ) : (
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-[#7A6570]">
             To install manually on iOS or Android: tap the browser menu (or share button on Safari) and select &quot;Add to Home Screen&quot;.
           </p>
         )}
       </div>
 
       {/* Security & Privacy Disclosures */}
-      <div className="bg-white border border-slate-200/90 shadow-sm rounded-2xl p-4 text-xs text-slate-600 space-y-2">
-        <div className="flex items-center gap-2 text-slate-900 font-bold mb-1">
+      <div className="bg-white border border-[#F3D9E2] shadow-sm rounded-2xl p-4 text-xs text-[#7A6570] space-y-2">
+        <div className="flex items-center gap-2 text-[#2D1B24] font-bold mb-1">
           <Lock className="w-4 h-4 text-emerald-600" /> Security &amp; Privacy Safeguards
         </div>
         <p>• Data is protected with Supabase Row Level Security (RLS) preventing unauthorized access.</p>

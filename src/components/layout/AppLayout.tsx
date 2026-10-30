@@ -9,7 +9,7 @@ export const AppLayout: React.FC = () => {
   const { isOnline } = usePWA();
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-[#FFF5F8] text-[#2D1B24] flex flex-col">
       {/* Offline Connectivity Warning Banner */}
       {!isOnline && (
         <div className="bg-amber-600 text-slate-950 font-bold text-xs py-1.5 px-4 text-center flex items-center justify-center gap-2 sticky top-0 z-50">

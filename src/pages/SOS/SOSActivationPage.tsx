@@ -285,28 +285,28 @@ export const SOSActivationPage: React.FC = () => {
           </div>
         </div>
 
-        <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">
+        <h2 className="text-2xl font-black text-[#2D1B24] mb-2 tracking-tight">
           Broadcasting Emergency SOS
         </h2>
-        <p className="text-xs sm:text-sm text-slate-600 max-w-xs mx-auto mb-6 font-medium">
+        <p className="text-xs sm:text-sm text-[#7A6570] max-w-xs mx-auto mb-6 font-medium">
           Alerting nearby police patrol units, trusted contacts, and emergency operations center...
         </p>
 
         {/* Real-time Location Readout Pill */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm text-xs text-left max-w-sm w-full mb-6">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-[#F3D9E2] shadow-sm text-xs text-left max-w-sm w-full mb-6">
           <MapPin className="w-4 h-4 text-emerald-500 shrink-0" />
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block">
+            <span className="text-[10px] uppercase font-bold text-[#7A6570] block">
               Incident Location
             </span>
-            <span className="text-slate-800 font-semibold truncate block">
+            <span className="text-[#2D1B24] font-semibold truncate block">
               {location
                 ? addressText || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
                 : 'Acquiring GPS coordinates (using secure city centroid)'}
             </span>
           </div>
           {accuracy ? (
-            <span className="shrink-0 text-[10px] font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+            <span className="shrink-0 text-[10px] font-mono text-[#7A6570] bg-[#FFF5F8] px-2 py-0.5 rounded-full border border-[#F3D9E2]">
               ±{accuracy}m
             </span>
           ) : (
@@ -319,7 +319,7 @@ export const SOSActivationPage: React.FC = () => {
         {/* Abort button if accidentally triggered */}
         <button
           onClick={() => navigate('/app')}
-          className="text-xs text-slate-500 hover:text-slate-800 underline underline-offset-4 transition-colors font-medium"
+          className="text-xs text-[#7A6570] hover:text-[#2D1B24] underline underline-offset-4 transition-colors font-medium"
         >
           Cancel / Return to Dashboard
         </button>
@@ -386,7 +386,7 @@ export const SOSActivationPage: React.FC = () => {
   return (
     <div className="w-full animate-fade-in pb-10">
       {/* Emergency Active Card with Live Dispatch Status */}
-      <div className="mb-5 p-5 rounded-3xl bg-gradient-to-b from-red-50 via-pink-50/40 to-white border-2 border-red-500 text-center shadow-lg text-slate-900">
+      <div className="mb-5 p-5 rounded-3xl bg-gradient-to-b from-red-50 via-[#FFF5F8] to-white border-2 border-red-500 text-center shadow-lg text-[#2D1B24]">
         <div className="flex items-center justify-center gap-2 mb-2">
           <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
           <span className="text-[11px] font-black uppercase tracking-widest text-red-600">
@@ -400,26 +400,26 @@ export const SOSActivationPage: React.FC = () => {
             <CheckCircle2 className="w-7 h-7" />
           </div>
           <div className="text-left">
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
+            <h2 className="text-lg sm:text-xl font-black text-[#2D1B24] leading-tight">
               Emergency Signal Sent!
             </h2>
-            <p className="text-[11px] font-mono text-slate-500">Reference: #{incidentId}</p>
+            <p className="text-[11px] font-mono text-[#7A6570]">Reference: #{incidentId}</p>
           </div>
         </div>
 
         {/* Active Dispatch Indicators */}
-        <div className="space-y-1.5 text-xs text-slate-700 mb-4 bg-white/90 p-3 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="space-y-1.5 text-xs text-[#2D1B24] mb-4 bg-white/90 p-3 rounded-2xl border border-[#F3D9E2] shadow-sm">
           <div className="flex items-center justify-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-bold text-slate-800">
+            <span className="font-bold text-[#2D1B24]">
               Nearby police &amp; responders receiving telemetry
             </span>
           </div>
-          <div className="flex items-center justify-center gap-2 text-slate-600">
-            <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" />
+          <div className="flex items-center justify-center gap-2 text-[#7A6570]">
+            <span className="w-2 h-2 rounded-full bg-[#E91E63] animate-pulse" />
             <span>Trusted emergency contacts notified</span>
           </div>
-          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 pt-1">
+          <div className="flex items-center justify-center gap-2 text-[11px] text-[#7A6570] pt-1">
             <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span className="truncate max-w-[240px]">
               {location
@@ -444,16 +444,16 @@ export const SOSActivationPage: React.FC = () => {
           OPTIONAL INCIDENT INFORMATION: Non-blocking post-SOS enrichment
           ───────────────────────────────────────────────────────────────────────── */}
       {!detailsSent ? (
-        <div className="bg-white border border-slate-200/90 rounded-3xl p-5 text-left mb-5 shadow-sm">
+        <div className="bg-white border border-[#F3D9E2] rounded-3xl p-5 text-left mb-5 shadow-sm">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-sm sm:text-base font-bold text-slate-900">
+            <h3 className="text-sm sm:text-base font-bold text-[#2D1B24]">
               What happened? You can tell us if you're able.
             </h3>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-pink-700 bg-pink-50 border border-pink-200 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#D81B60] bg-[#FFF5F8] border border-[#F3D9E2] px-2 py-0.5 rounded-full">
               Optional
             </span>
           </div>
-          <p className="text-xs text-slate-500 mb-4">
+          <p className="text-xs text-[#7A6570] mb-4">
             Alert is already dispatched. Providing details helps responders prepare the right equipment.
           </p>
 
@@ -468,8 +468,8 @@ export const SOSActivationPage: React.FC = () => {
                   onClick={() => setSelectedCategory(isSelected ? null : cat.type)}
                   className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold text-left transition-all ${
                     isSelected
-                      ? 'bg-pink-50 border-pink-400 text-pink-900 ring-2 ring-pink-500/20'
-                      : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:border-pink-300 hover:bg-pink-50/30'
+                      ? 'bg-[#FFF5F8] border-[#E91E63] text-[#2D1B24] ring-2 ring-[#E91E63]/20'
+                      : 'bg-white border-[#F3D9E2] text-[#2D1B24] hover:border-[#F8BBD0] hover:bg-[#FFF5F8]'
                   }`}
                 >
                   <span className="shrink-0">{cat.icon}</span>
@@ -486,7 +486,7 @@ export const SOSActivationPage: React.FC = () => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Near bus stop, white vehicle, need urgent medical help..."
               rows={2}
-              className="w-full bg-white text-slate-900 placeholder:text-slate-400 text-xs rounded-xl px-3.5 py-3 border border-slate-200 focus:outline-none focus:border-pink-500 shadow-sm resize-none pr-10"
+              className="w-full bg-white text-[#2D1B24] placeholder:text-[#7A6570] text-xs rounded-xl px-3.5 py-3 border border-[#F3D9E2] focus:outline-none focus:border-[#E91E63] shadow-sm resize-none pr-10"
             />
             {hasSpeechRecognition && (
               <button
@@ -494,8 +494,8 @@ export const SOSActivationPage: React.FC = () => {
                 onClick={startVoiceInput}
                 className={`absolute right-2.5 bottom-3 p-1.5 rounded-lg transition-colors ${
                   isListening
-                    ? 'text-pink-600 bg-pink-50 animate-pulse'
-                    : 'text-slate-400 hover:text-pink-600'
+                    ? 'text-[#E91E63] bg-[#FFF5F8] animate-pulse'
+                    : 'text-[#7A6570] hover:text-[#E91E63]'
                 }`}
                 title="Dictate via voice input"
               >
@@ -509,16 +509,16 @@ export const SOSActivationPage: React.FC = () => {
             <button
               type="button"
               onClick={handleGoToTracking}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors shadow-sm"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[#F3D9E2] bg-white text-[#7A6570] text-xs font-semibold hover:bg-[#FFF5F8] transition-colors shadow-sm"
             >
-              <SkipForward className="w-3.5 h-3.5 text-slate-400" />
+              <SkipForward className="w-3.5 h-3.5 text-[#7A6570]" />
               Skip for Now
             </button>
             <button
               type="button"
               onClick={handleSubmitDetails}
               disabled={isSubmittingDetails || (!selectedCategory && !description.trim())}
-              className="flex-1 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-pink-500/25 transition-colors"
+              className="flex-1 py-2.5 rounded-xl bg-[#E91E63] hover:bg-[#D81B60] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-[#E91E63]/25 transition-colors"
             >
               {isSubmittingDetails ? 'Updating...' : 'Send Details to Responders'}
             </button>

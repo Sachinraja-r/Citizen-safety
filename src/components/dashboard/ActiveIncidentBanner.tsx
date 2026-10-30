@@ -25,13 +25,13 @@ export const ActiveIncidentBanner: React.FC = () => {
           </div>
           <div>
             <span className="text-xs font-black text-red-600 uppercase tracking-wider">Active Incident</span>
-            <h4 className="text-sm font-bold text-slate-900">{formatIncidentType(activeIncident.type)}</h4>
+            <h4 className="text-sm font-bold text-[#2D1B24]">{formatIncidentType(activeIncident.type)}</h4>
           </div>
         </div>
         <StatusBadge status={activeIncident.status} size="sm" />
       </div>
 
-      <div className="flex items-center justify-between text-xs text-slate-600 pt-2 border-t border-red-100">
+      <div className="flex items-center justify-between text-xs text-[#7A6570] pt-2 border-t border-red-100">
         <span className="font-mono font-semibold">Incident #{activeIncident.id}</span>
         <span className="text-red-600 font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
           View Live Tracking &amp; Map <ArrowRight className="w-3.5 h-3.5" />

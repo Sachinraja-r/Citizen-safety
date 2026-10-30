@@ -17,9 +17,9 @@ export function formatIncidentStatus(status: IncidentStatus): {
     case 'ASSIGNED':
       return {
         label: 'Responder Dispatched & En Route',
-        color: 'text-pink-700',
-        bgColor: 'bg-pink-50',
-        borderColor: 'border-pink-200',
+        color: 'text-[#D81B60]',
+        bgColor: 'bg-[#FFF5F8]',
+        borderColor: 'border-[#F3D9E2]',
       };
     case 'ON_SCENE':
       return {

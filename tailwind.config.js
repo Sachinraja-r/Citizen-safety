@@ -8,6 +8,16 @@ export default {
   theme: {
     extend: {
       colors: {
+        raksha: {
+          primary: '#E91E63',
+          hover: '#D81B60',
+          soft: '#F8BBD0',
+          blush: '#FFF5F8',
+          dark: '#2D1B24',
+          muted: '#7A6570',
+          border: '#F3D9E2',
+          accent: '#FF6F91',
+        },
         brand: {
           dark: '#080c14',
           card: '#111827',

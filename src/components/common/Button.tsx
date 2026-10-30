@@ -34,13 +34,13 @@ export const Button: React.FC<ButtonProps> = ({
     danger:
       'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 focus:ring-red-500 border border-red-500/40',
     primary:
-      'bg-pink-600 hover:bg-pink-700 text-white shadow-md shadow-pink-500/25 focus:ring-pink-500 border border-pink-500/30',
+      'bg-[#E91E63] hover:bg-[#D81B60] text-white shadow-md shadow-[#E91E63]/25 focus:ring-[#E91E63] border border-[#E91E63]/30',
     secondary:
-      'bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 shadow-sm focus:ring-slate-400',
+      'bg-white hover:bg-[#FFF5F8] text-[#2D1B24] border border-[#F3D9E2] shadow-sm focus:ring-[#E91E63]/30',
     outline:
-      'bg-transparent hover:bg-slate-100 text-slate-700 border border-slate-300 focus:ring-slate-400',
+      'bg-transparent hover:bg-[#FFF5F8] text-[#2D1B24] border border-[#F3D9E2] focus:ring-[#E91E63]/30',
     ghost:
-      'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900 focus:ring-slate-300',
+      'bg-transparent hover:bg-[#FFF5F8] text-[#7A6570] hover:text-[#2D1B24] focus:ring-[#F8BBD0]',
     success:
       'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/25 focus:ring-emerald-500 border border-emerald-500/30',
   };

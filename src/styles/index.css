@@ -4,13 +4,21 @@
 
 :root {
   color-scheme: light;
+  --color-raksha-primary: #E91E63;
+  --color-raksha-hover: #D81B60;
+  --color-raksha-soft: #F8BBD0;
+  --color-raksha-blush: #FFF5F8;
+  --color-raksha-dark: #2D1B24;
+  --color-raksha-muted: #7A6570;
+  --color-raksha-border: #F3D9E2;
+  --color-raksha-accent: #FF6F91;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #FFF5F8;
+  color: #2D1B24;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -37,10 +45,10 @@ body {
 
 .leaflet-popup-content-wrapper {
   background-color: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #e2e8f0 !important;
+  color: #2D1B24 !important;
+  border: 1px solid #F3D9E2 !important;
   border-radius: 0.75rem !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 25px -5px rgba(233, 30, 99, 0.08) !important;
 }
 
 .leaflet-popup-tip {

@@ -49,8 +49,8 @@ export const SOSButton: React.FC<SOSButtonProps> = ({ onTrigger, isLoading = fal
         </span>
       </button>
 
-      <div className="mt-4 flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-        <Zap className="w-3.5 h-3.5 text-pink-500" />
+      <div className="mt-4 flex items-center gap-1.5 text-xs text-[#7A6570] font-medium">
+        <Zap className="w-3.5 h-3.5 text-[#E91E63]" />
         <span>Tap once to initiate instant responder dispatch</span>
       </div>
     </div>

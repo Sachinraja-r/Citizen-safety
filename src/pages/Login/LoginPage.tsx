@@ -6,6 +6,7 @@ import { Input } from '../../components/common/Input';
 import { AlertBanner } from '../../components/common/AlertBanner';
 import { authService } from '../../services/authService';
 import { Sparkles, ArrowLeft } from 'lucide-react';
+import { RakshaLogo } from '../../components/common/RakshaLogo';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -53,20 +54,20 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center px-4 py-8">
+    <div className="min-h-screen bg-[#FFF5F8] text-[#2D1B24] flex flex-col justify-center px-4 py-8">
       <div className="w-full max-w-sm mx-auto text-center">
         {/* Back link */}
         <div className="text-left mb-6">
-          <Link to="/" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-pink-600 transition-colors font-semibold">
+          <Link to="/" className="inline-flex items-center gap-1 text-xs text-[#7A6570] hover:text-[#E91E63] transition-colors font-semibold">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
 
         {/* Logo and title */}
         <div className="flex flex-col items-center mb-6">
-          <img src="/logo.svg" alt="Raksha Logo" className="w-12 h-12 mb-3 drop-shadow-md" />
-          <h2 className="text-2xl font-black tracking-tight text-slate-900">Citizen Access</h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <RakshaLogo variant="full" size="lg" className="mb-2" />
+          <h2 className="text-2xl font-black tracking-tight text-[#2D1B24]">Citizen Access</h2>
+          <p className="text-xs text-[#7A6570] mt-1">
             Sign in to access emergency safety services &amp; trusted dispatch
           </p>
         </div>
@@ -91,21 +92,21 @@ export const LoginPage: React.FC = () => {
         )}
 
         {/* 1. Reviewer / Demo Quick Access Button with Pink Hoysala Accents */}
-        <div className="mb-5 p-4 rounded-2xl bg-white border border-pink-200 text-left shadow-sm">
+        <div className="mb-5 p-4 rounded-2xl bg-white border border-[#F3D9E2] text-left shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-pink-700 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-pink-600" /> Instant Reviewer Access
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#D81B60] flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-[#E91E63]" /> Instant Reviewer Access
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Zero Setup Required</span>
+            <span className="text-[10px] text-[#7A6570] font-medium">Zero Setup Required</span>
           </div>
-          <p className="text-xs text-slate-600 mb-3">
+          <p className="text-xs text-[#7A6570] mb-3">
             Load demo account with simulated location, contacts &amp; response dispatch:
           </p>
           <Button
             type="button"
             variant="primary"
             size="md"
-            className="w-full font-bold shadow-md shadow-pink-500/25"
+            className="w-full font-bold shadow-md shadow-[#E91E63]/25"
             onClick={handleDemoLogin}
           >
             Sign In as Demo Citizen (Priya Sharma)
@@ -114,9 +115,9 @@ export const LoginPage: React.FC = () => {
 
         <div className="relative my-6 text-center">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200" />
+            <div className="w-full border-t border-[#F3D9E2]" />
           </div>
-          <span className="relative bg-slate-50 px-3 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+          <span className="relative bg-[#FFF5F8] px-3 text-[11px] uppercase tracking-wider text-[#7A6570] font-semibold">
             Or Sign In with Supabase
           </span>
         </div>
@@ -126,7 +127,7 @@ export const LoginPage: React.FC = () => {
           type="button"
           variant="secondary"
           size="md"
-          className="w-full mb-4 bg-white border-slate-200 hover:bg-slate-50 text-slate-700 shadow-sm"
+          className="w-full mb-4 bg-white border-[#F3D9E2] hover:bg-[#FFF5F8] text-[#2D1B24] shadow-sm"
           onClick={handleGoogleLogin}
           leftIcon={
             <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24">
@@ -184,7 +185,7 @@ export const LoginPage: React.FC = () => {
           </Button>
         </form>
 
-        <p className="text-xs text-slate-500 mt-6">
+        <p className="text-xs text-[#7A6570] mt-6">
           By signing in, you confirm your consent for emergency dispatch telemetry and priority location sharing during active SOS alerts.
         </p>
       </div>

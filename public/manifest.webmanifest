@@ -1,11 +1,11 @@
 {
-  "name": "Raksha - Citizen Safety & Emergency Response",
-  "short_name": "Raksha SOS",
-  "description": "Rapid citizen emergency assistance and community responder coordination",
+  "name": "Raksha — Safe. Always.",
+  "short_name": "Raksha",
+  "description": "Safe. Always. - Citizen Safety & Emergency Response Platform",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#080c14",
-  "theme_color": "#080c14",
+  "background_color": "#FFF5F8",
+  "theme_color": "#E91E63",
   "orientation": "portrait",
   "icons": [
     {

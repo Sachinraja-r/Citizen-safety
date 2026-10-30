@@ -30,10 +30,10 @@ export const DashboardPage: React.FC = () => {
       {/* Greeting and quick status */}
       <div className="flex items-center justify-between mb-4 text-left">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-pink-600">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#D81B60]">
             Civilian Protection • Pink Hoysala Mesh
           </span>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-black text-[#2D1B24]">
             Hello, {user?.fullName?.split(' ')[0] || 'Citizen'}
           </h1>
         </div>
@@ -66,10 +66,10 @@ export const DashboardPage: React.FC = () => {
 
       {/* Emergency History Section (if any past incidents exist) */}
       {historyIncidents.length > 0 && (
-        <div className="w-full text-left my-5 bg-white border border-slate-200/90 shadow-sm rounded-2xl p-4">
+        <div className="w-full text-left my-5 bg-white border border-[#F3D9E2] shadow-sm rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-pink-600" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#2D1B24] flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-[#E91E63]" />
               Recent Emergency History
             </h3>
           </div>
@@ -79,23 +79,23 @@ export const DashboardPage: React.FC = () => {
               <div
                 key={incident.id}
                 onClick={() => navigate(`/app/incidents/${incident.id}`)}
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/70 cursor-pointer hover:border-pink-300 hover:bg-pink-50/30 transition-colors"
+                className="flex items-center justify-between p-3 rounded-xl bg-[#FFF5F8] border border-[#F3D9E2] cursor-pointer hover:border-[#F8BBD0] hover:bg-[#F8BBD0]/20 transition-colors"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-900">
+                    <span className="text-xs font-bold text-[#2D1B24]">
                       {formatIncidentType(incident.type)}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
+                    <span className="text-[10px] text-[#7A6570] font-mono">
                       #{incident.id}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
+                  <p className="text-[11px] text-[#7A6570] mt-0.5">
                     {formatRelativeTime(incident.createdAt)} • Status:{' '}
-                    <span className="font-semibold text-slate-700">{incident.status}</span>
+                    <span className="font-semibold text-[#2D1B24]">{incident.status}</span>
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-[#7A6570]" />
               </div>
             ))}
           </div>

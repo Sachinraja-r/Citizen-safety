@@ -7,9 +7,9 @@ export const LocationStatus: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-between bg-white border border-slate-200 shadow-sm rounded-xl px-3.5 py-2.5 text-xs text-slate-700">
+      <div className="flex items-center justify-between bg-white border border-[#F3D9E2] shadow-sm rounded-xl px-3.5 py-2.5 text-xs text-[#2D1B24]">
         <div className="flex items-center gap-2">
-          <RefreshCw className="w-4 h-4 text-pink-600 animate-spin" />
+          <RefreshCw className="w-4 h-4 text-[#E91E63] animate-spin" />
           <span>Acquiring high-accuracy GPS coordinates...</span>
         </div>
       </div>
@@ -37,18 +37,18 @@ export const LocationStatus: React.FC = () => {
 
   if (location) {
     return (
-      <div className="flex items-center justify-between bg-white border border-slate-200 shadow-sm rounded-xl px-3.5 py-2.5 text-xs text-slate-700">
+      <div className="flex items-center justify-between bg-white border border-[#F3D9E2] shadow-sm rounded-xl px-3.5 py-2.5 text-xs text-[#2D1B24]">
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative">
             <MapPin className="w-4 h-4 text-emerald-500 shrink-0" />
             <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
           </div>
-          <span className="truncate text-slate-800 font-medium">
+          <span className="truncate text-[#2D1B24] font-medium">
             {addressText || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`}
           </span>
         </div>
         {accuracy !== null && (
-          <span className="text-[11px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full shrink-0 ml-2 border border-slate-200 font-mono">
+          <span className="text-[11px] text-[#7A6570] bg-[#FFF5F8] px-2 py-0.5 rounded-full shrink-0 ml-2 border border-[#F3D9E2] font-mono">
             ±{accuracy}m
           </span>
         )}
@@ -57,14 +57,14 @@ export const LocationStatus: React.FC = () => {
   }
 
   return (
-    <div className="flex items-center justify-between bg-white border border-slate-200 shadow-sm rounded-xl px-3.5 py-2.5 text-xs text-slate-500">
+    <div className="flex items-center justify-between bg-white border border-[#F3D9E2] shadow-sm rounded-xl px-3.5 py-2.5 text-xs text-[#7A6570]">
       <div className="flex items-center gap-2">
-        <MapPin className="w-4 h-4 text-slate-500" />
+        <MapPin className="w-4 h-4 text-[#7A6570]" />
         <span>Location permission not requested</span>
       </div>
       <button
         onClick={retryLocation}
-        className="text-blue-400 font-semibold hover:text-blue-300 shrink-0 ml-2"
+        className="text-[#E91E63] font-semibold hover:text-[#D81B60] shrink-0 ml-2"
       >
         Detect Location
       </button>

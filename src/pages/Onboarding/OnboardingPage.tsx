@@ -83,15 +83,15 @@ export const OnboardingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center px-4 py-8">
-      <div className="w-full max-w-md mx-auto text-left bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xl">
+    <div className="min-h-screen bg-[#FFF5F8] text-[#2D1B24] flex flex-col justify-center px-4 py-8">
+      <div className="w-full max-w-md mx-auto text-left bg-white border border-[#F3D9E2] rounded-3xl p-6 shadow-xl">
         {/* Progress indicator */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#F3D9E2]">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-pink-600">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#D81B60]">
               Setup Step {step} of 3
             </span>
-            <h2 className="text-lg font-black text-slate-900">
+            <h2 className="text-lg font-black text-[#2D1B24]">
               {step === 1 && 'Citizen Safety Profile'}
               {step === 2 && 'Location Permission'}
               {step === 3 && 'Trusted Contact Setup'}
@@ -102,7 +102,7 @@ export const OnboardingPage: React.FC = () => {
               <div
                 key={s}
                 className={`w-6 h-1.5 rounded-full transition-colors ${
-                  s === step ? 'bg-pink-600' : s < step ? 'bg-emerald-500' : 'bg-slate-200'
+                  s === step ? 'bg-[#E91E63]' : s < step ? 'bg-emerald-500' : 'bg-[#F3D9E2]'
                 }`}
               />
             ))}
@@ -133,25 +133,25 @@ export const OnboardingPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-[#2D1B24] mb-1.5 uppercase tracking-wider">
                   Date of Birth
                 </label>
                 <input
                   type="date"
                   value={dateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
-                  className="w-full bg-white text-slate-900 text-sm rounded-xl px-3 py-2.5 border border-slate-200 focus:outline-none focus:border-pink-500 shadow-sm"
+                  className="w-full bg-white text-[#2D1B24] text-sm rounded-xl px-3 py-2.5 border border-[#F3D9E2] focus:outline-none focus:border-[#E91E63] shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-[#2D1B24] mb-1.5 uppercase tracking-wider">
                   Blood Group
                 </label>
                 <select
                   value={bloodGroup}
                   onChange={(e) => setBloodGroup(e.target.value)}
-                  className="w-full bg-white text-slate-900 text-sm rounded-xl px-3 py-2.5 border border-slate-200 focus:outline-none focus:border-pink-500 shadow-sm"
+                  className="w-full bg-white text-[#2D1B24] text-sm rounded-xl px-3 py-2.5 border border-[#F3D9E2] focus:outline-none focus:border-[#E91E63] shadow-sm"
                 >
                   {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map((bg) => (
                     <option key={bg} value={bg}>
@@ -176,19 +176,19 @@ export const OnboardingPage: React.FC = () => {
               placeholder="e.g. Asthma, diabetic, carries EpiPen"
             />
 
-            <label className="flex items-start gap-2.5 text-xs text-slate-600 cursor-pointer pt-2">
+            <label className="flex items-start gap-2.5 text-xs text-[#7A6570] cursor-pointer pt-2">
               <input
                 type="checkbox"
                 checked={shareMedical}
                 onChange={(e) => setShareMedical(e.target.checked)}
-                className="rounded bg-white border-slate-300 text-pink-600 focus:ring-0 mt-0.5"
+                className="rounded bg-white border-[#F3D9E2] text-[#E91E63] focus:ring-0 mt-0.5"
               />
               <span>
                 Share medical notes with emergency paramedics only when a Medical Emergency SOS is triggered.
               </span>
             </label>
 
-            <Button type="submit" variant="primary" size="lg" className="w-full mt-4 font-bold shadow-md shadow-pink-500/25">
+            <Button type="submit" variant="primary" size="lg" className="w-full mt-4 font-bold shadow-md shadow-[#E91E63]/25">
               Continue to Location Permission
             </Button>
           </form>
@@ -197,12 +197,12 @@ export const OnboardingPage: React.FC = () => {
         {/* STEP 2: Location Permission */}
         {step === 2 && (
           <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center mx-auto mb-3 border border-pink-200">
+            <div className="p-4 rounded-2xl bg-[#FFF5F8] border border-[#F3D9E2] text-center">
+              <div className="w-12 h-12 rounded-2xl bg-white text-[#E91E63] flex items-center justify-center mx-auto mb-3 border border-[#F3D9E2] shadow-sm">
                 <MapPin className="w-6 h-6 animate-pulse" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900 mb-1">Why Raksha Needs GPS Location</h3>
-              <p className="text-xs text-slate-600 leading-relaxed mb-4">
+              <h3 className="text-sm font-bold text-[#2D1B24] mb-1">Why Raksha Needs GPS Location</h3>
+              <p className="text-xs text-[#7A6570] leading-relaxed mb-4">
                 When you press SOS, emergency dispatchers and police patrol vehicles need your coordinates to reach you. Without location, responders cannot identify where you are in distress.
               </p>
 
@@ -220,7 +220,7 @@ export const OnboardingPage: React.FC = () => {
                 <Button
                   type="button"
                   variant="primary"
-                  className="w-full font-bold shadow-md shadow-pink-500/25"
+                  className="w-full font-bold shadow-md shadow-[#E91E63]/25"
                   onClick={() => requestLocation()}
                 >
                   Grant Browser Location Access
@@ -240,7 +240,7 @@ export const OnboardingPage: React.FC = () => {
               <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)}>
                 Back
               </Button>
-              <Button type="button" variant="primary" className="flex-1 font-bold shadow-md shadow-pink-500/25" onClick={handleStep2Next}>
+              <Button type="button" variant="primary" className="flex-1 font-bold shadow-md shadow-[#E91E63]/25" onClick={handleStep2Next}>
                 {location ? 'Continue' : 'Skip & Continue with Fallback'}
               </Button>
             </div>
@@ -250,8 +250,8 @@ export const OnboardingPage: React.FC = () => {
         {/* STEP 3: Trusted Contact */}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="p-3 rounded-xl bg-pink-50 border border-pink-200 text-xs text-pink-800 flex items-start gap-2.5">
-              <Users className="w-4 h-4 text-pink-600 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-xl bg-[#FFF5F8] border border-[#F3D9E2] text-xs text-[#2D1B24] flex items-start gap-2.5">
+              <Users className="w-4 h-4 text-[#E91E63] shrink-0 mt-0.5" />
               <span>
                 Add your primary trusted emergency contact. When you trigger SOS, this person receives high-priority notification with your live coordinates.
               </span>
@@ -273,13 +273,13 @@ export const OnboardingPage: React.FC = () => {
             />
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-[#2D1B24] mb-1.5 uppercase tracking-wider">
                 Relationship
               </label>
               <select
                 value={contactRelation}
                 onChange={(e) => setContactRelation(e.target.value)}
-                className="w-full bg-white text-slate-900 text-sm rounded-xl px-3 py-2.5 border border-slate-200 focus:outline-none focus:border-pink-500 shadow-sm"
+                className="w-full bg-white text-[#2D1B24] text-sm rounded-xl px-3 py-2.5 border border-[#F3D9E2] focus:outline-none focus:border-[#E91E63] shadow-sm"
               >
                 <option value="Brother">Brother</option>
                 <option value="Sister">Sister</option>
@@ -297,7 +297,7 @@ export const OnboardingPage: React.FC = () => {
               <Button
                 type="button"
                 variant="primary"
-                className="flex-1 font-bold shadow-md shadow-pink-500/25"
+                className="flex-1 font-bold shadow-md shadow-[#E91E63]/25"
                 onClick={handleComplete}
                 isLoading={loading}
               >
