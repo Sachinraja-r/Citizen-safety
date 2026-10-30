@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { contactService } from '../../services/contactService';
+import { notificationService } from '../../services/notificationService';
+import {
+  playEmergencyAlertSound,
+  stopEmergencyAlertSound,
+} from '../../utils/emergencyAudio';
 import { TrustedContact } from '../../types';
 import { ContactCard } from '../../components/contacts/ContactCard';
 import { ContactModal } from '../../components/contacts/ContactModal';
 import { Button } from '../../components/common/Button';
-import { Users, UserPlus } from 'lucide-react';
+import {
+  Users,
+  UserPlus,
+  Bell,
+  Volume2,
+  VolumeX,
+  CheckCircle2,
+} from 'lucide-react';
 
 export const ContactsPage: React.FC = () => {
   const { user } = useAuth();
@@ -15,6 +27,13 @@ export const ContactsPage: React.FC = () => {
   const [editingContact, setEditingContact] = useState<TrustedContact | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Emergency Sound & Push Notification States
+  const [permission, setPermission] = useState<NotificationPermission>(
+    notificationService.getPermissionState()
+  );
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+
   const fetchContacts = async () => {
     const list = await contactService.getContacts(user?.id);
     setContacts(list);
@@ -23,7 +42,31 @@ export const ContactsPage: React.FC = () => {
 
   useEffect(() => {
     fetchContacts();
+    setPermission(notificationService.getPermissionState());
+    return () => {
+      stopEmergencyAlertSound();
+    };
   }, [user?.id]);
+
+  const handleTestSound = async () => {
+    if (isPlayingAudio) {
+      stopEmergencyAlertSound();
+      setIsPlayingAudio(false);
+    } else {
+      const ok = await playEmergencyAlertSound({ durationMs: 4000 });
+      setIsPlayingAudio(ok);
+      if (ok) {
+        setTimeout(() => setIsPlayingAudio(false), 4000);
+      }
+    }
+  };
+
+  const handleEnablePush = async () => {
+    setSubscribing(true);
+    await notificationService.subscribeToPush(user?.id);
+    setPermission(notificationService.getPermissionState());
+    setSubscribing(false);
+  };
 
   const handleOpenAdd = () => {
     setEditingContact(null);
@@ -88,6 +131,76 @@ export const ContactsPage: React.FC = () => {
       <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-[#F3D9E2] shadow-sm text-xs">
         <span className="text-[#2D1B24] font-medium">Designated Contacts</span>
         <span className="font-bold text-[#E91E63]">{contacts.length} / 5</span>
+      </div>
+
+      {/* Emergency Alert Beep & Web Push Notification Channel */}
+      <div className="bg-white border border-[#F3D9E2] shadow-sm rounded-2xl p-4 text-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bell className="w-4 h-4 text-[#E91E63]" />
+            <h3 className="font-bold text-[#2D1B24] uppercase tracking-wider text-[11px]">
+              Emergency Alert Sound &amp; Push Channel
+            </h3>
+          </div>
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+              permission === 'granted'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : permission === 'denied'
+                ? 'bg-red-50 text-red-700 border-red-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
+            }`}
+          >
+            {permission === 'granted'
+              ? 'Push Alerts Enabled'
+              : permission === 'denied'
+              ? 'Permission Denied'
+              : 'Permission Required'}
+          </span>
+        </div>
+
+        <p className="text-[11px] text-[#7A6570] leading-relaxed">
+          When an SOS is activated, recipients receive a high-priority notification with an unmistakable dual-tone acoustic alert (853 Hz + 960 Hz) wherever device settings permit it.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-2 pt-1">
+          {permission !== 'granted' ? (
+            <Button
+              size="sm"
+              variant="primary"
+              className="flex-1 font-bold shadow-sm"
+              onClick={handleEnablePush}
+              isLoading={subscribing}
+              leftIcon={<Bell className="w-3.5 h-3.5" />}
+            >
+              Enable Browser Push Notifications
+            </Button>
+          ) : (
+            <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-[11px] py-1">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Web Push active on this device
+            </div>
+          )}
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 text-xs"
+            onClick={handleTestSound}
+            leftIcon={
+              isPlayingAudio ? (
+                <VolumeX className="w-3.5 h-3.5 text-red-500" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5 text-[#E91E63]" />
+              )
+            }
+          >
+            {isPlayingAudio ? 'Stop Alert Tone' : 'Test Emergency Beep & Vibrate'}
+          </Button>
+        </div>
+
+        <p className="text-[10px] text-[#7A6570] italic pt-0.5">
+          Note: Web browsers cannot override hardware silent switches or OS Do Not Disturb modes.
+        </p>
       </div>
 
       {loading ? (

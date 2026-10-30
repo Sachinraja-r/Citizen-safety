@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "tsx --test tests/e2e_services.test.mjs tests/e2e_user_journeys.test.ts"
+    "test": "tsx --test tests/e2e_services.test.mjs tests/e2e_user_journeys.test.ts tests/emergency_notifications.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

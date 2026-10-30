@@ -73,14 +73,40 @@ create table if not exists public.responders (
   is_verified boolean default true
 );
 
--- 6. Enable Row Level Security (RLS)
+-- 6. Trusted Contact Emergency Notifications Table
+create table if not exists public.trusted_contact_notifications (
+  id text primary key,
+  incident_id text references public.incidents(id) on delete cascade not null,
+  contact_id text not null,
+  contact_name text not null,
+  contact_phone text,
+  channel text default 'SMS' not null,
+  status text default 'QUEUED' not null,
+  secure_token text not null,
+  error_message text,
+  dispatched_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  delivered_at timestamp with time zone,
+  acknowledged_at timestamp with time zone
+);
+
+-- 7. Push Subscriptions Table
+create table if not exists public.push_subscriptions (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade,
+  endpoint text unique not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 8. Enable Row Level Security (RLS)
 alter table public.profiles enable row level security;
 alter table public.trusted_contacts enable row level security;
 alter table public.incidents enable row level security;
 alter table public.incident_timeline enable row level security;
 alter table public.responders enable row level security;
+alter table public.trusted_contact_notifications enable row level security;
+alter table public.push_subscriptions enable row level security;
 
--- 7. RLS Policies
+-- 9. RLS Policies
 -- Profiles: Users can view and edit their own profile
 create policy "Allow users to read own profile" on public.profiles
   for select using (auth.uid() = id);
@@ -111,6 +137,19 @@ create policy "Allow creating timeline events" on public.incident_timeline
 create policy "Allow reading responders" on public.responders
   for select using (true);
 
--- 8. Enable Realtime Publications
+-- Contact Notifications: readable by incident owner & authorized token viewers
+create policy "Allow reading notifications" on public.trusted_contact_notifications
+  for select using (true);
+create policy "Allow inserting notifications" on public.trusted_contact_notifications
+  for insert with check (true);
+create policy "Allow updating notification acknowledgment" on public.trusted_contact_notifications
+  for update using (true);
+
+-- Push Subscriptions: users manage their subscriptions
+create policy "Allow users to manage subscriptions" on public.push_subscriptions
+  for all using (auth.uid() = user_id);
+
+-- 10. Enable Realtime Publications
 alter publication supabase_realtime add table public.incidents;
 alter publication supabase_realtime add table public.incident_timeline;
+alter publication supabase_realtime add table public.trusted_contact_notifications;

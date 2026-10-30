@@ -111,6 +111,7 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       severity: 'CRITICAL',
       description: note,
       location: finalLocation,
+      victimName: user.fullName || 'Citizen in Distress',
     });
 
     if (createError || !incident) {

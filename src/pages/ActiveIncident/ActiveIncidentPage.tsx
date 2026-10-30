@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { useIncident } from '../../contexts/IncidentContext';
 import { incidentService } from '../../services/incidentService';
 import { Incident, IncidentType } from '../../types';
@@ -9,6 +10,7 @@ import { MapView } from '../../components/maps/MapView';
 import { ResponderCard } from '../../components/emergency/ResponderCard';
 import { IncidentTimeline } from '../../components/emergency/IncidentTimeline';
 import { CancelIncidentModal } from '../../components/emergency/CancelIncidentModal';
+import { ContactNotificationStatusList } from '../../components/emergency/ContactNotificationStatusList';
 import { formatIncidentType, formatRelativeTime } from '../../utils/formatters';
 import {
   ArrowLeft,
@@ -36,6 +38,7 @@ const CATEGORY_OPTIONS: { type: IncidentType; label: string }[] = [
 export const ActiveIncidentPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     activeIncident,
     resolveCurrentIncident,
@@ -330,6 +333,12 @@ export const ActiveIncidentPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Live Trusted Contact Notification Dispatch & Acknowledgement */}
+      <ContactNotificationStatusList
+        incidentId={incident.id}
+        victimName={user?.fullName || 'Citizen in Distress'}
+      />
 
       {/* WhatsApp Sharing Fallback (User-Initiated) */}
       <div className="p-3.5 bg-white border border-[#F3D9E2] shadow-sm rounded-2xl text-left space-y-2">

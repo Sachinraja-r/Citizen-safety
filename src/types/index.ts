@@ -79,6 +79,32 @@ export interface Incident {
   assignedResponder?: Responder;
   timeline: IncidentEvent[];
   aiTriage?: AITriageSummary;
+  notifications?: ContactNotificationRecord[];
+}
+
+export type NotificationChannel = 'PUSH' | 'SMS' | 'WHATSAPP';
+
+export type NotificationDeliveryStatus =
+  | 'QUEUED'
+  | 'PUSH_SENT'
+  | 'SMS_SENT'
+  | 'DELIVERED'
+  | 'ACKNOWLEDGED'
+  | 'FAILED';
+
+export interface ContactNotificationRecord {
+  id: string;
+  incidentId: string;
+  contactId: string;
+  contactName: string;
+  contactPhone: string;
+  channel: NotificationChannel;
+  status: NotificationDeliveryStatus;
+  secureToken: string;
+  errorMessage?: string;
+  dispatchedAt: string;
+  deliveredAt?: string;
+  acknowledgedAt?: string;
 }
 
 export interface TrustedContact {

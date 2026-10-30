@@ -16,6 +16,7 @@ import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { ResponderLoginPage } from './pages/Responder/ResponderLoginPage';
 import { ResponderDashboard } from './pages/Responder/ResponderDashboard';
 import { DevAdminDashboard } from './pages/Responder/DevAdminDashboard';
+import { EmergencyAlertRecipientPage } from './pages/Emergency/EmergencyAlertRecipientPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -53,6 +54,7 @@ export const App: React.FC = () => {
               {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/emergency/:id" element={<EmergencyAlertRecipientPage />} />
 
               {/* Onboarding Flow */}
               <Route

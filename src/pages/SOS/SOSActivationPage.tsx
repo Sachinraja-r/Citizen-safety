@@ -3,7 +3,9 @@ import { useLocation as useRouterLocation, useNavigate } from 'react-router-dom'
 import { useIncident } from '../../contexts/IncidentContext';
 import { useLocation } from '../../contexts/LocationContext';
 import { IncidentType } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 import { CancelIncidentModal } from '../../components/emergency/CancelIncidentModal';
+import { ContactNotificationStatusList } from '../../components/emergency/ContactNotificationStatusList';
 import {
   AlertOctagon,
   MapPin,
@@ -82,6 +84,7 @@ type Phase = 'dispatching' | 'active' | 'failed';
 export const SOSActivationPage: React.FC = () => {
   const routerLocation = useRouterLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     activeIncident,
     triggerSOS,
@@ -439,6 +442,15 @@ export const SOSActivationPage: React.FC = () => {
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Trusted Contact Notification Dispatch Breakdown */}
+      {incidentId && (
+        <ContactNotificationStatusList
+          incidentId={incidentId}
+          victimName={user?.fullName || 'Citizen in Distress'}
+          className="mb-5"
+        />
+      )}
 
       {/* ─────────────────────────────────────────────────────────────────────────
           OPTIONAL INCIDENT INFORMATION: Non-blocking post-SOS enrichment

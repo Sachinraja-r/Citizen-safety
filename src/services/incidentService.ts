@@ -1,5 +1,7 @@
 import { Incident, IncidentStatus, IncidentType, LocationData, Responder } from '../types';
 import { supabase, isSupabaseConfigured } from './supabase';
+import { contactService } from './contactService';
+import { notificationService } from './notificationService';
 
 const INCIDENTS_STORAGE_KEY = 'raksha_active_incidents';
 const CURRENT_ACTIVE_ID_KEY = 'raksha_current_incident_id';
@@ -15,6 +17,7 @@ export const incidentService = {
     severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
     description?: string;
     location: LocationData;
+    victimName?: string;
   }): Promise<{ incident: Incident; error: Error | null }> {
     const timestamp = new Date().toISOString();
     const incidentId = 'INC-' + Math.floor(100000 + Math.random() * 900000);
@@ -88,6 +91,32 @@ export const incidentService = {
     this.saveIncidentLocally(initialIncident);
     localStorage.setItem(CURRENT_ACTIVE_ID_KEY, initialIncident.id);
 
+    // Asynchronously dispatch emergency alerts to registered trusted contacts
+    // Priority Rule: DO NOT wait for notification delivery or AI to complete!
+    contactService
+      .getContacts(params.userId)
+      .then((contacts) => {
+        if (contacts && contacts.length > 0) {
+          notificationService
+            .dispatchEmergencyAlertToContacts({
+              incident: initialIncident,
+              victimName: params.victimName || 'Citizen in Distress',
+              contacts,
+            })
+            .then((notifs) => {
+              initialIncident.notifications = notifs;
+              this.saveIncidentLocally(initialIncident);
+              this.notifyListeners(initialIncident);
+            })
+            .catch((err) => {
+              console.warn('Asynchronous contact notification dispatch failed:', err);
+            });
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to load contacts for emergency dispatch:', err);
+      });
+
     // If in demo mode, launch automated responder simulation after 5 seconds to showcase ASSIGNED and ON_SCENE states
     if (!isSupabaseConfigured()) {
       this.scheduleDemoResponderFlow(initialIncident.id, params.location);
@@ -136,7 +165,14 @@ export const incidentService = {
 
     // Local fallback
     const all = this.getAllLocalIncidents();
-    return all.find((i) => i.id === id) || null;
+    const inc = all.find((i) => i.id === id) || null;
+    if (inc) {
+      const notifs = await notificationService.getIncidentNotifications(id);
+      if (notifs && notifs.length > 0) {
+        inc.notifications = notifs;
+      }
+    }
+    return inc;
   },
 
   async getActiveIncident(userId: string): Promise<Incident | null> {

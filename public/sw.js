@@ -78,3 +78,89 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMERGENCY WEB PWA PUSH NOTIFICATION & SOUND / CLICK HANDLING
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Handle Web Push event from Push Service / PushManager
+self.addEventListener('push', (event) => {
+  let data = {
+    title: 'EMERGENCY SOS ALERT',
+    body: 'Your trusted contact needs help. Open this alert to view their available location and emergency status.',
+    url: '/',
+    incidentId: '',
+  };
+
+  if (event.data) {
+    try {
+      data = Object.assign(data, event.data.json());
+    } catch {
+      data.body = event.data.text() || data.body;
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/raksha-logo.png',
+    badge: '/logo.svg',
+    tag: data.incidentId ? `emergency-${data.incidentId}` : 'emergency-sos',
+    renotify: true,
+    requireInteraction: true, // Keep notification pinned on screen until user interacts
+    silent: false,
+    vibrate: [400, 150, 400, 150, 800],
+    data: {
+      url: data.url || '/',
+      incidentId: data.incidentId,
+    },
+    actions: [
+      {
+        action: 'open_alert',
+        title: '🚨 Open Emergency Alert',
+      },
+    ],
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title, options));
+});
+
+// Handle notification click by user on lock screen or notification tray
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // If a window is already open with the target URL, focus it
+      for (const client of windowClients) {
+        if (client.url.includes(targetUrl) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise open a new window
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
+// Client message relay to trigger notifications locally for testing & verification
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'TRIGGER_EMERGENCY_NOTIFICATION') {
+    const { title, body, url, incidentId } = event.data;
+    const options = {
+      body,
+      icon: '/raksha-logo.png',
+      badge: '/logo.svg',
+      tag: incidentId ? `emergency-${incidentId}` : 'emergency-sos',
+      renotify: true,
+      requireInteraction: true,
+      silent: false,
+      vibrate: [400, 150, 400, 150, 800],
+      data: { url: url || '/' },
+    };
+    self.registration.showNotification(title || 'EMERGENCY SOS ALERT', options);
+  }
+});
