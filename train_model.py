@@ -1,31 +1,28 @@
 """
-Raksha Multilingual Emergency Classifier Training Script
-Downloads pretrained multilingual Transformer (distilbert-base-multilingual-cased)
-and fine-tunes it on Raksha incident data across English, Hindi, and Kannada.
+Raksha Multilingual Emergency Classifier Training Script (v2)
+Fine-tunes DistilBERT on 583+ multilingual emergency reports across
+English, Hindi, Kannada, Hinglish, and Kanglish.
 """
 
 import os
 import sys
 import json
 import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, get_linear_schedule_with_warmup
+from torch.optim import AdamW
+from sklearn.model_selection import train_test_split
 
-# Ensure UTF-8 output on Windows
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from torch.optim import AdamW
-from sklearn.model_selection import train_test_split
 
-# Output directory for the trained weights
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "backend", "models", "raksha_emergency_distilbert")
+MODEL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "backend", "models", "raksha_emergency_distilbert"))
 os.makedirs(MODEL_DIR, exist_ok=True)
 
-# 6 Canonical Raksha incident classes
 LABEL_LIST = ["MEDICAL", "HARASSMENT", "VIOLENCE", "ACCIDENT", "FIRE", "OTHER"]
 LABEL2ID = {label: i for i, label in enumerate(LABEL_LIST)}
 ID2LABEL = {i: label for i, label in enumerate(LABEL_LIST)}
@@ -60,13 +57,12 @@ class EmergencyDataset(Dataset):
             "severity": torch.tensor(self.severities[idx], dtype=torch.long)
         }
 
-def train():
-    print("=" * 60)
-    print("[*] Starting Raksha Emergency Transformer Model Training")
-    print("=" * 60)
+def train(dataset_file="training_data_v2.json", epochs=4, batch_size=16, lr=4e-5):
+    print("=" * 65)
+    print(f"[*] Training Raksha Emergency Transformer on {dataset_file}")
+    print("=" * 65)
     
-    # 1. Load data
-    data_path = os.path.join(os.path.dirname(__file__), "training_data.json")
+    data_path = os.path.join(os.path.dirname(__file__), dataset_file)
     with open(data_path, "r", encoding="utf-8") as f:
         samples = json.load(f)
         
@@ -74,16 +70,15 @@ def train():
     labels = [LABEL2ID[s["incident_type"]] for s in samples]
     severities = [s.get("severity", 3) for s in samples]
     
-    print(f"Loaded {len(texts)} training samples.")
+    print(f"Loaded {len(texts)} samples from {dataset_file}.")
     
-    # Train / validation split
     train_texts, val_texts, train_labels, val_labels, train_sev, val_sev = train_test_split(
         texts, labels, severities, test_size=0.15, random_state=42, stratify=labels
     )
+    print(f"Train set: {len(train_texts)} | Validation set: {len(val_texts)}")
     
-    # 2. Download Pretrained Tokenizer & Model
     pretrained_name = "distilbert-base-multilingual-cased"
-    print(f"\n[+] Step 1: Downloading pretrained '{pretrained_name}' from Hugging Face...")
+    print(f"\n[+] Loading base architecture: '{pretrained_name}'...")
     tokenizer = AutoTokenizer.from_pretrained(pretrained_name)
     model = AutoModelForSequenceClassification.from_pretrained(
         pretrained_name,
@@ -92,23 +87,23 @@ def train():
         label2id=LABEL2ID
     )
     
-    # 3. Prepare DataLoaders
     train_dataset = EmergencyDataset(train_texts, train_labels, train_sev, tokenizer)
     val_dataset = EmergencyDataset(val_texts, val_labels, val_sev, tokenizer)
     
-    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     
-    # 4. Training configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Compute Device: {device}")
     model.to(device)
     
-    optimizer = AdamW(model.parameters(), lr=3e-5, weight_decay=0.01)
+    optimizer = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
+    total_steps = len(train_loader) * epochs
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=int(total_steps * 0.1), num_training_steps=total_steps)
     criterion = nn.CrossEntropyLoss()
     
-    epochs = 4
-    print(f"\n[+] Step 2: Fine-tuning model for {epochs} epochs...")
+    print(f"\n[+] Training for {epochs} epochs (Batch size={batch_size}, LR={lr})...")
+    best_val_acc = 0.0
     
     for epoch in range(1, epochs + 1):
         model.train()
@@ -127,7 +122,9 @@ def train():
             loss = criterion(logits, targets)
             
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
+            scheduler.step()
             
             total_loss += loss.item()
             preds = torch.argmax(logits, dim=1)
@@ -154,25 +151,31 @@ def train():
                 
         val_acc = (val_correct / val_total) * 100
         print(f"  Epoch {epoch}/{epochs} | Loss: {avg_loss:.4f} | Train Acc: {train_acc:.1f}% | Val Acc: {val_acc:.1f}%")
+        
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            model.save_pretrained(MODEL_DIR)
+            tokenizer.save_pretrained(MODEL_DIR)
 
-    # 5. Save model weights and tokenizer
-    print(f"\n[+] Step 3: Saving trained model to {MODEL_DIR}...")
+    print(f"\n[+] Saving final model weights and tokenizer to {MODEL_DIR}...")
     model.save_pretrained(MODEL_DIR)
     tokenizer.save_pretrained(MODEL_DIR)
     
-    # Save metadata
     meta = {
+        "dataset_version": "v2",
+        "samples_count": len(samples),
         "model_type": "distilbert-base-multilingual-cased",
         "labels": LABEL_LIST,
         "classes": ID2LABEL,
-        "val_accuracy": val_acc
+        "best_val_accuracy": best_val_acc,
+        "final_val_accuracy": val_acc
     }
-    with open(os.path.join(MODEL_DIR, "raksha_meta.json"), "w") as f:
+    with open(os.path.join(MODEL_DIR, "raksha_meta.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
         
-    print("=" * 60)
-    print("[SUCCESS] Training complete! Model saved and ready for local inference.")
-    print("=" * 60)
+    print("=" * 65)
+    print(f"[SUCCESS] Model v2 training complete! Best Val Acc: {best_val_acc:.1f}%")
+    print("=" * 65)
 
 if __name__ == "__main__":
     train()

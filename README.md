@@ -77,3 +77,22 @@ Execute the comprehensive test suite with:
 ```bash
 python -m pytest tests/ -v
 ```
+
+## Testing the Supabase Database Connection
+
+The local `.env` file is git-ignored. Copy the database settings from `.env.example`
+into `.env`, then fill in either `DATABASE_URL` or all five `DB_*` values from your
+Supabase project's PostgreSQL connection details. Keep the password and connection
+string private; do not add them to source control. The check requires a TLS connection
+and only runs `SELECT 1`.
+
+Install the Python dependencies if needed, then run the check from the repository root:
+
+```powershell
+python -m pip install -r requirements.txt
+python .\check_db_connection.py
+```
+
+The script reports success only after connecting and receiving `1`. On failure, verify
+the host, port, database, user, and password in `.env`, and confirm that the selected
+Supabase connection method is reachable from your network.

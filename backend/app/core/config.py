@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     LLM_TIMEOUT_SECONDS: float = 10.0          # Raised slightly for local Ollama cold starts
     LLM_MAX_RETRIES: int = 1
 
+    # Database connection
+    DATABASE_URL: Optional[str] = None
+    DB_HOST: Optional[str] = None
+    DB_PORT: Optional[int] = None
+    DB_NAME: Optional[str] = None
+    DB_USER: Optional[str] = None
+    DB_PASSWORD: Optional[str] = None
+
     # Location & Dispatch defaults (MVP Rules)
     INITIAL_SEARCH_RADIUS_METERS: int = 300
     EXPANDED_SEARCH_RADIUS_METERS: int = 500
