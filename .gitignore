@@ -28,3 +28,18 @@ dist-ssr
 .vercel
 supabase/.temp/
 .temp/
+
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+env/
+.env
+venv/
+.venv/
+.pytest_cache/
+backend/models/
+*.safetensors
+*.bin
