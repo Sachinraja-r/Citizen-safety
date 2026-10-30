@@ -10,7 +10,7 @@ import { AITriageSummary, LocationData } from '../types';
  * Strict 4-second timeout. Silently returns null on any failure.
  */
 
-const AI_ENGINE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_AI_ENGINE_URL) || 'http://localhost:8000';
+const AI_ENGINE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_AI_ENGINE_URL) || '';
 
 // Map Person 3's canonical incident types to display strings
 const INCIDENT_TYPE_LABELS: Record<string, string> = {

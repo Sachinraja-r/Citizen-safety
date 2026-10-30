@@ -111,9 +111,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } catch {
         body = {};
       }
+    } else if (Buffer.isBuffer(body)) {
+      try {
+        body = JSON.parse((body as Buffer).toString('utf-8'));
+      } catch {
+        body = {};
+      }
     }
-    const { description, language_hint } = body || {};
-    const text = (description || '').trim();
+    const text = (body?.description || body?.text || '').trim();
+    const language_hint = body?.language_hint || body?.languageHint || 'en';
 
     if (!text) {
       return res.status(200).json({
