@@ -123,7 +123,22 @@ export const LandingPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="w-full border-t border-slate-800/80 py-5 text-center text-xs text-slate-500">
-        <p>Raksha Safety Platform • Mobile PWA & Emergency Dispatch Architecture</p>
+        <p>Raksha Safety Platform • Mobile PWA &amp; Emergency Dispatch Architecture</p>
+        <p className="mt-2">
+          <a
+            href="/responder"
+            className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
+          >
+            🚔 Police / Responder Portal →
+          </a>
+          <span className="mx-3 text-slate-700">|</span>
+          <a
+            href="/responder/dev"
+            className="text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors"
+          >
+            🛠 Developer Admin Dashboard →
+          </a>
+        </p>
       </footer>
     </div>
   );

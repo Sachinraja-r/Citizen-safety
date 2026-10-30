@@ -13,6 +13,9 @@ import { ActiveIncidentPage } from './pages/ActiveIncident/ActiveIncidentPage';
 import { ContactsPage } from './pages/Contacts/ContactsPage';
 import { ProfilePage } from './pages/Profile/ProfilePage';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
+import { ResponderLoginPage } from './pages/Responder/ResponderLoginPage';
+import { ResponderDashboard } from './pages/Responder/ResponderDashboard';
+import { DevAdminDashboard } from './pages/Responder/DevAdminDashboard';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -76,6 +79,11 @@ export const App: React.FC = () => {
                 <Route path="contacts" element={<ContactsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
               </Route>
+
+              {/* Responder / Police Portal — uses own session, not AuthProvider */}
+              <Route path="/responder" element={<ResponderLoginPage />} />
+              <Route path="/responder/dashboard" element={<ResponderDashboard />} />
+              <Route path="/responder/dev" element={<DevAdminDashboard />} />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
