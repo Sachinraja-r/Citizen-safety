@@ -3,33 +3,64 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Multilingual emergency triage engine running natively as a Vercel Serverless Function
 // Supports Kannada, Hindi, English, and regional romanized transliterations (Kanglish, Hinglish)
 
-const KEYWORD_MAPPINGS: Record<string, Record<string, string[]>> = {
-  FIRE: {
-    kn: ['ಬೆಂಕಿ', 'ಹೊಗೆ', 'ಸುಡುತ್ತಿದೆ', 'ಜ್ವಾಲೆ', 'benki', 'hoge', 'suduttide'],
-    hi: ['आग', 'धुआं', 'धुआँ', 'जल रहा', 'लपटें', 'aag', 'dhuan', 'dhuwan', 'jal raha'],
-    en: ['fire', 'blaze', 'smoke', 'flames', 'burning', 'explosion']
+// High-Precision Multilingual Emergency Classification Rules
+interface TriageRule {
+  type: 'FIRE' | 'MEDICAL' | 'HARASSMENT' | 'VIOLENCE' | 'ACCIDENT';
+  baseSeverity: number;
+  unit: string;
+  knRoots: string[];
+  hiRoots: string[];
+  enRegex: RegExp;
+  reason: (lang: string) => string;
+}
+
+const TRIAGE_RULES: TriageRule[] = [
+  {
+    type: 'FIRE',
+    baseSeverity: 5,
+    unit: 'Fire Department & Rescue Services',
+    knRoots: ['ಬೆಂಕಿ', 'ಹೊಗೆ', 'ಸುಡು', 'ಜ್ವಾಲೆ', 'ಸುಟ್ಟು', 'ಸ್ಪೋಟ', 'ಹತ್ತಿದೆ', 'ಸುಡುತ್ತ'],
+    hiRoots: ['आग', 'धुआं', 'धुआँ', 'जल', 'लपट', 'धधक', 'ब्लास्ट', 'विस्फोट'],
+    enRegex: /\b(fire|smoke|flame(s)?|burn(ing)?|blaze|explosion|explod(ed|ing)|cylinder|benki|hoge|suduttide|aag|dhuan|jal\s*raha)\b/i,
+    reason: (lang) => `Active structural fire / blaze / smoke detected in ${lang}. Urgent life safety dispatch to Fire & Rescue.`
   },
-  ACCIDENT: {
-    kn: ['ಅಪಘಾತ', 'ಡಿಕ್ಕಿ', 'ರಕ್ತ', 'ವಾಹನ ಪಲ್ಟಿ', 'ಗುದ್ದಿದೆ', 'apaghatha', 'accident', 'dikkki', 'palti'],
-    hi: ['दुर्घटना', 'एक्सीडेंट', 'टक्कर', 'खून', 'गाड़ी पलट गई', 'durghatna', 'takkar', 'khoon', 'gaadi gir'],
-    en: ['accident', 'crash', 'collision', 'hit and run', 'run over', 'bike fall']
+  {
+    type: 'MEDICAL',
+    baseSeverity: 5,
+    unit: 'Emergency Medical Services (108 / KSEMS Ambulance)',
+    knRoots: ['ಹೃದಯ', 'ಉಸಿರಾಟ', 'ಪ್ರಜ್ಞೆ', 'ಆಸ್ಪತ್ರೆ', 'ನೋವು', 'ಆಂಬ್ಯುಲೆನ್ಸ್', 'ರಕ್ತ', 'ಬಿದ್ದಿ', 'ಹುಷಾರಿಲ್ಲ', 'ಸ್ಪ್ರಹ'],
+    hiRoots: ['दिल', 'दौरा', 'सांस', 'बेहोश', 'अस्पताल', 'दर्द', 'एम्बुलेंस', 'हार्ट', 'चक्कर', 'खून', 'तबीयत', 'बेहोशी'],
+    enRegex: /\b(medical|heart\s*attack|cardiac|unconscious|breath(ing|less)?|chok(ing|ed)?|seizure|faint(ed|ing)?|collaps(ed|ing)?|bleed(ing)?|cpr|stroke|ambulance|chest\s*pain|hrudayaghatha|usirata|aspatal|behoshi)\b/i,
+    reason: (lang) => `Severe trauma / cardiac distress / unconsciousness detected in ${lang}. Priority 1 Ambulance dispatched.`
   },
-  MEDICAL: {
-    kn: ['ಹೃದಯಾಘಾತ', 'ಉಸಿರಾಟ', 'ಪ್ರಜ್ಞೆ ತಪ್ಪಿದೆ', 'ಆಸ್ಪತ್ರೆ', 'ನೋವು', 'ಆಂಬ್ಯುಲೆನ್ಸ್', 'hrudayaghatha', 'ambulance', 'usirata'],
-    hi: ['दिल का दौरा', 'सांस', 'बेहोश', 'अस्पताल', 'दर्द', 'एम्बुलेंस', 'हार्ट अटैक', 'behoshi', 'saans', 'aspatal'],
-    en: ['medical', 'heart attack', 'unconscious', 'breathing', 'ambulance', 'bleeding', 'stroke', 'collapsed', 'cpr']
+  {
+    type: 'HARASSMENT',
+    baseSeverity: 4,
+    unit: 'Pink Hoysala Women Safety Patrol Unit',
+    knRoots: ['ಹಿಂಬಾಲಿ', 'ಚುಡಾ', 'ಕಿರುಕುಳ', 'ಕಾಟ', 'ಬೆದರಿ', 'ಹೆದರಿ', 'ಫಾಲೋ', 'ತೊಂದರೆ', 'ಕಾಪಾಡಿ', 'ರಕ್ಷಿಸಿ'],
+    hiRoots: ['पीछा', 'छेड़', 'छेड़', 'परेशान', 'धमकी', 'बदसलूकी', 'फॉलो', 'डर', 'पीछे'],
+    enRegex: /\b(stalk(ing|er|ed)?|follow(ing|ed)?(\s*me)?|harass(ment|ing|ed)?|eve\s*teas(ing|e)?|molest(ation|ed|ing)?|threat(ening|en)?|creepy|unsafe|himbalis|chhed|peecha|kirukula|following)\b/i,
+    reason: (lang) => `Active stalking / predatory pursuit / harassment detected in ${lang}. High-priority dispatch to Pink Hoysala Unit.`
   },
-  VIOLENCE: {
-    kn: ['ಹಲ್ಲೆ', 'ಹೊಡೆದಾಟ', 'ಚಾಕು', 'ಬಂದೂಕು', 'ದರೋಡೆ', 'ಕೊಲೆ', 'halle', 'hodedata', 'chaku', 'kole'],
-    hi: ['हमला', 'मारपीट', 'चाकू', 'बंदूक', 'डकैती', 'लड़ाई', 'खूनखराबा', 'hamla', 'marpeet', 'ladai', 'chaku'],
-    en: ['violence', 'assault', 'fight', 'attack', 'knife', 'gun', 'stabbing', 'robbery', 'weapon']
+  {
+    type: 'VIOLENCE',
+    baseSeverity: 4,
+    unit: 'Armed Police Patrol & Quick Reaction Team',
+    knRoots: ['ಹಲ್ಲೆ', 'ಹೊಡೆ', 'ಕೊಲೆ', 'ಚಾಕು', 'ಬಂದೂಕು', 'ದರೋಡೆ', 'ಮಾರಾಮಾರಿ', 'ಗಲಾಟೆ', 'ಬಡಿಯು'],
+    hiRoots: ['मार', 'पीट', 'हमला', 'चाकू', 'बंदूक', 'लड़ाई', 'खून', 'डकैती', 'कत्ल', 'गुंडा'],
+    enRegex: /\b(assault|stab(bed|bing)?|knife|gun|shoot(ing)?|shot|kill(ing|ed)?|murder|attack(ed|ing)?|fight(ing)?|beat(ing|en)?|punch|weapon|robber(y)?|robbed|mugged|hamla|marpeet|halle|hodedata)\b/i,
+    reason: (lang) => `Active physical violence / armed assault threat detected in ${lang}. Armed Police Patrol Unit alerted.`
   },
-  HARASSMENT: {
-    kn: ['ಕಿರುಕುಳ', 'ಹಿಂಬಾಲಿಸುವುದು', 'ಚುಡಾಯಿಸುವುದು', 'ಬೆದರಿಕೆ', 'kirukula', 'himbalisuvudu', 'bedarike'],
-    hi: ['छेड़छाड़', 'पीछा', 'परेशान', 'धमकी', 'बदसलूकी', 'chhedchhad', 'peecha', 'pareshan', 'dhamki'],
-    en: ['harassment', 'stalking', 'eve teasing', 'following me', 'molestation', 'threat']
+  {
+    type: 'ACCIDENT',
+    baseSeverity: 4,
+    unit: 'Traffic Emergency & Trauma Care Unit',
+    knRoots: ['ಅಪಘಾತ', 'ಡಿಕ್ಕಿ', 'ಗುದ್ದಿ', 'ಪಲ್ಟಿ', 'ವಾಹನ', 'ಆಕ್ಸಿಡೆಂಟ್'],
+    hiRoots: ['दुर्घटना', 'एक्सीडेंट', 'टक्कर', 'पलट', 'चोट', 'गाड़ी', 'गिर'],
+    enRegex: /\b(accident|crash(ed|ing)?|collision|hit\s*and\s*run|ran\s*over|bike\s*fall|head\s*on|trapped|apaghatha|durghatna|takkar|palti)\b/i,
+    reason: (lang) => `High-impact road accident / vehicular collision detected in ${lang}. Dispatched to Traffic & Trauma teams.`
   }
-};
+];
 
 const SPAM_PATTERNS = [
   /^(test|testing|haha|lol|asdf|qwerty|foo|bar|12345)$/i,
@@ -118,57 +149,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Match keywords
+    // 1. Language Script Detection
     let detectedLang = language_hint || 'en';
-    for (const [incType, langDict] of Object.entries(KEYWORD_MAPPINGS)) {
-      for (const [lang, words] of Object.entries(langDict)) {
-        for (const word of words) {
-          const isAscii = /^[\x00-\x7F]*$/.test(word);
-          let isMatch = false;
-
-          if (isAscii) {
-            const regex = new RegExp(`\\b${word.toLowerCase()}\\b`, 'i');
-            isMatch = regex.test(textLower);
-          } else {
-            isMatch = textLower.includes(word.toLowerCase());
-          }
-
-          if (isMatch) {
-            detectedLang = lang;
-            let severity = 4;
-            if (incType === 'MEDICAL' || incType === 'FIRE') severity = 5;
-            else if (incType === 'HARASSMENT') severity = 3;
-
-            return res.status(200).json({
-              incident_type: incType,
-              severity,
-              confidence: 0.88,
-              possible_duplicate: false,
-              spam_flag: false,
-              reason: `Emergency keyword match (${incType}) detected in ${lang}`,
-              is_fallback: false,
-              triage_error: null,
-              detected_language: detectedLang,
-              medical_disclaimer: 'AI severity is an advisory prioritization score and NOT a certified medical assessment.',
-              triaged_at: new Date().toISOString()
-            });
-          }
-        }
-      }
-    }
-
-    // Check unicode script
     if (/[\u0C80-\u0CFF]/.test(text)) detectedLang = 'kn';
     else if (/[\u0900-\u097F]/.test(text)) detectedLang = 'hi';
 
-    // Default emergency response
+    // 2. High-Precision Multilingual Rules Evaluation
+    for (const rule of TRIAGE_RULES) {
+      const matchKn = rule.knRoots.some((k) => textLower.includes(k));
+      const matchHi = rule.hiRoots.some((h) => textLower.includes(h));
+      const matchEn = rule.enRegex.test(textLower);
+
+      if (matchKn || matchHi || matchEn) {
+        const lang = matchKn ? 'kn' : matchHi ? 'hi' : detectedLang;
+        const langName = lang === 'kn' ? 'Kannada' : lang === 'hi' ? 'Hindi' : 'English';
+
+        let severity = rule.baseSeverity;
+        // Weapon escalation: armed violence escalates to P1 (5/5)
+        if (rule.type === 'VIOLENCE' && /(knife|gun|chaku|bandook|stab|shoot|kill|murder|ಕೊಲೆ|ಚಾಕು|ಬಂದೂಕು)/i.test(textLower)) {
+          severity = 5;
+        }
+
+        return res.status(200).json({
+          incident_type: rule.type,
+          severity,
+          confidence: 0.94,
+          possible_duplicate: false,
+          spam_flag: false,
+          reason: rule.reason(langName),
+          is_fallback: false,
+          triage_error: null,
+          detected_language: lang,
+          medical_disclaimer: 'AI severity is an advisory prioritization score and NOT a certified medical assessment.',
+          triaged_at: new Date().toISOString()
+        });
+      }
+    }
+
+    // Default safe emergency response if no specific keyword matched
+    const langLabel = detectedLang === 'kn' ? 'Kannada' : detectedLang === 'hi' ? 'Hindi' : 'English';
     return res.status(200).json({
       incident_type: 'OTHER',
       severity: 3,
-      confidence: 0.5,
+      confidence: 0.65,
       possible_duplicate: false,
       spam_flag: false,
-      reason: 'Citizen emergency incident reported',
+      reason: `Citizen emergency incident reported (${langLabel}). Standard priority dispatch to nearest patrolling unit.`,
       is_fallback: false,
       triage_error: null,
       detected_language: detectedLang,
