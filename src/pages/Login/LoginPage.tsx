@@ -53,11 +53,11 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#080c14] text-slate-100 flex flex-col justify-center px-4 py-8">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center px-4 py-8">
       <div className="w-full max-w-sm mx-auto text-center">
         {/* Back link */}
         <div className="text-left mb-6">
-          <Link to="/" className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200">
+          <Link to="/" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-pink-600 transition-colors font-semibold">
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
         </div>
@@ -65,9 +65,9 @@ export const LoginPage: React.FC = () => {
         {/* Logo and title */}
         <div className="flex flex-col items-center mb-6">
           <img src="/logo.svg" alt="Raksha Logo" className="w-12 h-12 mb-3 drop-shadow-md" />
-          <h2 className="text-2xl font-black tracking-tight text-white">Citizen Access</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Sign in to access emergency safety services & trusted dispatch
+          <h2 className="text-2xl font-black tracking-tight text-slate-900">Citizen Access</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Sign in to access emergency safety services &amp; trusted dispatch
           </p>
         </div>
 
@@ -90,22 +90,22 @@ export const LoginPage: React.FC = () => {
           />
         )}
 
-        {/* 1. Reviewer / Demo Quick Access Button */}
-        <div className="mb-5 p-4 rounded-2xl bg-gradient-to-b from-blue-950/40 to-slate-900 border border-blue-500/30 text-left">
+        {/* 1. Reviewer / Demo Quick Access Button with Pink Hoysala Accents */}
+        <div className="mb-5 p-4 rounded-2xl bg-white border border-pink-200 text-left shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" /> Instant Reviewer Access
+            <span className="text-[11px] font-bold uppercase tracking-wider text-pink-700 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-pink-600" /> Instant Reviewer Access
             </span>
-            <span className="text-[10px] text-slate-400">Zero Setup Required</span>
+            <span className="text-[10px] text-slate-400 font-medium">Zero Setup Required</span>
           </div>
-          <p className="text-xs text-slate-300 mb-3">
-            Load demo account with simulated location, contacts & response dispatch:
+          <p className="text-xs text-slate-600 mb-3">
+            Load demo account with simulated location, contacts &amp; response dispatch:
           </p>
           <Button
             type="button"
             variant="primary"
             size="md"
-            className="w-full font-bold shadow-md"
+            className="w-full font-bold shadow-md shadow-pink-500/25"
             onClick={handleDemoLogin}
           >
             Sign In as Demo Citizen (Priya Sharma)
@@ -114,9 +114,9 @@ export const LoginPage: React.FC = () => {
 
         <div className="relative my-6 text-center">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-800" />
+            <div className="w-full border-t border-slate-200" />
           </div>
-          <span className="relative bg-[#080c14] px-3 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+          <span className="relative bg-slate-50 px-3 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
             Or Sign In with Supabase
           </span>
         </div>
@@ -124,9 +124,9 @@ export const LoginPage: React.FC = () => {
         {/* Google OAuth Button */}
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           size="md"
-          className="w-full mb-4 bg-slate-900/80 border-slate-700 hover:bg-slate-800"
+          className="w-full mb-4 bg-white border-slate-200 hover:bg-slate-50 text-slate-700 shadow-sm"
           onClick={handleGoogleLogin}
           leftIcon={
             <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24">

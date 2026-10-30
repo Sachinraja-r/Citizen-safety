@@ -20,32 +20,32 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
 }) => {
   const configs = {
     warning: {
-      border: 'border-amber-500/30',
-      bg: 'bg-amber-500/10',
-      text: 'text-amber-200',
-      icon: <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />,
-      btn: 'text-amber-400 hover:text-amber-300',
+      border: 'border-amber-200',
+      bg: 'bg-amber-50',
+      text: 'text-amber-800',
+      icon: <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />,
+      btn: 'text-amber-700 hover:text-amber-800 font-bold',
     },
     error: {
-      border: 'border-red-500/30',
-      bg: 'bg-red-500/10',
-      text: 'text-red-200',
-      icon: <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />,
-      btn: 'text-red-400 hover:text-red-300',
+      border: 'border-red-200',
+      bg: 'bg-red-50',
+      text: 'text-red-800',
+      icon: <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />,
+      btn: 'text-red-700 hover:text-red-800 font-bold',
     },
     info: {
-      border: 'border-blue-500/30',
-      bg: 'bg-blue-500/10',
-      text: 'text-blue-200',
-      icon: <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />,
-      btn: 'text-blue-400 hover:text-blue-300',
+      border: 'border-pink-200',
+      bg: 'bg-pink-50/60',
+      text: 'text-pink-900',
+      icon: <Info className="w-4 h-4 text-pink-600 shrink-0 mt-0.5" />,
+      btn: 'text-pink-700 hover:text-pink-800 font-bold',
     },
     success: {
-      border: 'border-emerald-500/30',
-      bg: 'bg-emerald-500/10',
-      text: 'text-emerald-200',
-      icon: <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />,
-      btn: 'text-emerald-400 hover:text-emerald-300',
+      border: 'border-emerald-200',
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-800',
+      icon: <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />,
+      btn: 'text-emerald-700 hover:text-emerald-800 font-bold',
     },
   };
 
@@ -56,7 +56,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
       {c.icon}
       <div className="flex-1 text-xs sm:text-sm text-left">
         {title && <h4 className={`font-semibold mb-0.5 ${c.text}`}>{title}</h4>}
-        <p className="text-slate-300 leading-relaxed">{message}</p>
+        <p className="text-slate-700 leading-relaxed font-medium">{message}</p>
         {actionText && onAction && (
           <button
             onClick={onAction}

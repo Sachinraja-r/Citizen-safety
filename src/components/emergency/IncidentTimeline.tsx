@@ -25,30 +25,30 @@ export const IncidentTimeline: React.FC<IncidentTimelineProps> = ({ currentStatu
   };
 
   return (
-    <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 text-left">
-      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-1.5">
-        <Clock className="w-4 h-4 text-blue-400" />
+    <div className="bg-white border border-slate-200/90 shadow-sm rounded-2xl p-4 text-left">
+      <h3 className="text-xs font-bold uppercase tracking-wider text-pink-700 mb-4 flex items-center gap-1.5">
+        <Clock className="w-4 h-4 text-pink-600" />
         Live Emergency Timeline
       </h3>
 
-      <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+      <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-pink-100">
         {events.map((evt) => (
           <div key={evt.id} className="relative">
             {/* Step marker */}
-            <div className="absolute -left-6 top-0.5 w-5 h-5 rounded-full bg-[#111827] border border-slate-700 flex items-center justify-center">
+            <div className="absolute -left-6 top-0.5 w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-xs">
               {getStepIcon(evt.status)}
             </div>
 
             <div className="min-w-0">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs sm:text-sm font-bold text-slate-200">{evt.title}</h4>
-                <span className="text-[10px] text-slate-500 font-mono">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-800">{evt.title}</h4>
+                <span className="text-[10px] text-slate-400 font-mono">
                   {formatTimeOnly(evt.timestamp)}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">{evt.description}</p>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">{evt.description}</p>
               {evt.actor && (
-                <span className="inline-block mt-1 text-[10px] text-slate-500 bg-slate-800/80 px-2 py-0.5 rounded">
+                <span className="inline-block mt-1 text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded font-medium">
                   Source: {evt.actor}
                 </span>
               )}

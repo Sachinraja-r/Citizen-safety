@@ -113,13 +113,13 @@ export const ContactModal: React.FC<ContactModalProps> = ({
         />
 
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+          <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
             Relationship
           </label>
           <select
             value={relationship}
             onChange={(e) => setRelationship(e.target.value)}
-            className="w-full bg-[#111827] text-slate-100 text-sm rounded-xl px-3.5 py-3 border border-slate-800 focus:outline-none focus:border-blue-500"
+            className="w-full bg-white text-slate-900 text-sm rounded-xl px-3.5 py-3 border border-slate-200 focus:outline-none focus:border-pink-500 shadow-sm"
           >
             {RELATIONSHIPS.map((rel) => (
               <option key={rel} value={rel}>
@@ -130,13 +130,13 @@ export const ContactModal: React.FC<ContactModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+          <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
             Contact Priority (1 = Highest)
           </label>
           <select
             value={priority}
             onChange={(e) => setPriority(Number(e.target.value))}
-            className="w-full bg-[#111827] text-slate-100 text-sm rounded-xl px-3.5 py-3 border border-slate-800 focus:outline-none focus:border-blue-500"
+            className="w-full bg-white text-slate-900 text-sm rounded-xl px-3.5 py-3 border border-slate-200 focus:outline-none focus:border-pink-500 shadow-sm"
           >
             <option value={1}>1 - Primary Emergency Contact</option>
             <option value={2}>2 - Secondary Contact</option>
@@ -146,23 +146,23 @@ export const ContactModal: React.FC<ContactModalProps> = ({
           </select>
         </div>
 
-        <div className="pt-2 space-y-2 border-t border-slate-800/80">
-          <label className="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
+        <div className="pt-2 space-y-2 border-t border-slate-100">
+          <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
             <input
               type="checkbox"
               checked={notifySms}
               onChange={(e) => setNotifySms(e.target.checked)}
-              className="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0"
+              className="rounded bg-white border-slate-300 text-pink-600 focus:ring-0"
             />
             <span>Send automated SMS with live GPS link on SOS</span>
           </label>
 
-          <label className="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
+          <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
             <input
               type="checkbox"
               checked={notifyCall}
               onChange={(e) => setNotifyCall(e.target.checked)}
-              className="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0"
+              className="rounded bg-white border-slate-300 text-pink-600 focus:ring-0"
             />
             <span>Trigger automated priority telephony voice call</span>
           </label>

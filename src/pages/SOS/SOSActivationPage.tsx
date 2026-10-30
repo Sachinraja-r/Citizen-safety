@@ -273,11 +273,11 @@ export const SOSActivationPage: React.FC = () => {
   if (phase === 'dispatching') {
     return (
       <div className="w-full min-h-[75vh] flex flex-col items-center justify-center text-center animate-fade-in py-8 px-4">
-        {/* Radar pulsing emergency beacon */}
+        {/* Radar pulsing emergency beacon — BOLD RED */}
         <div className="relative flex items-center justify-center mb-8">
-          <div className="absolute w-52 h-52 rounded-full bg-red-600/15 animate-ping-slow pointer-events-none" />
-          <div className="absolute w-40 h-40 rounded-full bg-red-600/25 animate-sos-pulse pointer-events-none" />
-          <div className="relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-800 border-4 border-red-300 shadow-sos flex flex-col items-center justify-center text-white">
+          <div className="absolute w-56 h-56 rounded-full bg-red-500/10 animate-ping-slow pointer-events-none" />
+          <div className="absolute w-44 h-44 rounded-full bg-red-500/15 animate-sos-pulse pointer-events-none" />
+          <div className="relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 border-4 border-red-200 shadow-2xl shadow-red-500/50 flex flex-col items-center justify-center text-white">
             <AlertOctagon className="w-12 h-12 text-white animate-pulse" />
             <span className="text-[11px] font-black tracking-widest uppercase mt-0.5 text-red-100">
               DISPATCH
@@ -285,32 +285,32 @@ export const SOSActivationPage: React.FC = () => {
           </div>
         </div>
 
-        <h2 className="text-2xl font-black text-white mb-2 tracking-tight">
+        <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">
           Broadcasting Emergency SOS
         </h2>
-        <p className="text-xs sm:text-sm text-slate-300 max-w-xs mx-auto mb-6">
+        <p className="text-xs sm:text-sm text-slate-600 max-w-xs mx-auto mb-6 font-medium">
           Alerting nearby police patrol units, trusted contacts, and emergency operations center...
         </p>
 
         {/* Real-time Location Readout Pill */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs text-left max-w-sm w-full mb-6">
-          <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm text-xs text-left max-w-sm w-full mb-6">
+          <MapPin className="w-4 h-4 text-emerald-500 shrink-0" />
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] uppercase font-bold text-slate-500 block">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block">
               Incident Location
             </span>
-            <span className="text-slate-200 font-medium truncate block">
+            <span className="text-slate-800 font-semibold truncate block">
               {location
                 ? addressText || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
                 : 'Acquiring GPS coordinates (using secure city centroid)'}
             </span>
           </div>
           {accuracy ? (
-            <span className="shrink-0 text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+            <span className="shrink-0 text-[10px] font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
               ±{accuracy}m
             </span>
           ) : (
-            <span className="shrink-0 text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+            <span className="shrink-0 text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 font-semibold">
               Approx
             </span>
           )}
@@ -319,7 +319,7 @@ export const SOSActivationPage: React.FC = () => {
         {/* Abort button if accidentally triggered */}
         <button
           onClick={() => navigate('/app')}
-          className="text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4 transition-colors"
+          className="text-xs text-slate-500 hover:text-slate-800 underline underline-offset-4 transition-colors font-medium"
         >
           Cancel / Return to Dashboard
         </button>
@@ -333,29 +333,29 @@ export const SOSActivationPage: React.FC = () => {
   if (phase === 'failed') {
     return (
       <div className="w-full min-h-[65vh] flex flex-col items-center justify-center text-center py-8 px-4 animate-fade-in">
-        <div className="w-20 h-20 rounded-full bg-slate-900 border-2 border-red-500/50 flex items-center justify-center mb-5 text-red-500">
+        <div className="w-20 h-20 rounded-full bg-red-50 border-2 border-red-200 flex items-center justify-center mb-5 text-red-600 shadow-sm">
           <WifiOff className="w-10 h-10" />
         </div>
 
-        <h2 className="text-xl sm:text-2xl font-black text-white mb-2">
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-2">
           SOS Could Not Be Confirmed
         </h2>
 
-        <div className="max-w-xs mx-auto mb-4 p-3 bg-red-950/30 border border-red-500/40 rounded-2xl text-xs text-red-300">
-          <AlertTriangle className="w-4 h-4 inline-block mr-1.5 text-red-400 mb-0.5" />
-          <span className="font-semibold">
+        <div className="max-w-xs mx-auto mb-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-800">
+          <AlertTriangle className="w-4 h-4 inline-block mr-1.5 text-red-600 mb-0.5" />
+          <span className="font-bold">
             Responders have NOT been notified. Do NOT assume help is dispatched.
           </span>
         </div>
 
-        <p className="text-xs text-slate-400 max-w-xs mx-auto mb-6">
+        <p className="text-xs text-slate-600 max-w-xs mx-auto mb-6">
           {networkError || sosError || 'Unable to establish connection to emergency dispatch backend.'}
         </p>
 
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <button
             onClick={handleRetry}
-            className="w-full py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-900/40 transition-colors"
+            className="w-full py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-red-500/30 transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Retry SOS Dispatch
@@ -363,15 +363,15 @@ export const SOSActivationPage: React.FC = () => {
 
           <a
             href="tel:112"
-            className="w-full py-3.5 rounded-2xl bg-slate-900 border border-amber-500/50 text-amber-400 hover:bg-amber-950/20 font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+            className="w-full py-3.5 rounded-2xl bg-white border border-amber-300 text-amber-800 hover:bg-amber-50 font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors"
           >
-            <PhoneCall className="w-4 h-4" />
+            <PhoneCall className="w-4 h-4 text-amber-600" />
             Call 112 (National Emergency Helpline)
           </a>
 
           <button
             onClick={() => navigate('/app')}
-            className="text-xs text-slate-500 hover:text-slate-300 underline underline-offset-4 mt-2"
+            className="text-xs text-slate-500 hover:text-slate-800 underline underline-offset-4 mt-2"
           >
             Return to Safety Dashboard
           </button>
@@ -386,41 +386,41 @@ export const SOSActivationPage: React.FC = () => {
   return (
     <div className="w-full animate-fade-in pb-10">
       {/* Emergency Active Card with Live Dispatch Status */}
-      <div className="mb-5 p-5 rounded-3xl bg-gradient-to-b from-red-950/70 via-slate-900 to-[#111827] border-2 border-red-500/60 text-center shadow-sos">
+      <div className="mb-5 p-5 rounded-3xl bg-gradient-to-b from-red-50 via-pink-50/40 to-white border-2 border-red-500 text-center shadow-lg text-slate-900">
         <div className="flex items-center justify-center gap-2 mb-2">
           <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-[11px] font-black uppercase tracking-widest text-red-400">
+          <span className="text-[11px] font-black uppercase tracking-widest text-red-600">
             Emergency SOS Active
           </span>
           <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
         </div>
 
         <div className="flex items-center justify-center gap-3 mb-3">
-          <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 shrink-0">
+          <div className="w-12 h-12 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 shrink-0 shadow-sm">
             <CheckCircle2 className="w-7 h-7" />
           </div>
           <div className="text-left">
-            <h2 className="text-lg sm:text-xl font-black text-white leading-tight">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight">
               Emergency Signal Sent!
             </h2>
-            <p className="text-[11px] font-mono text-slate-400">Reference: #{incidentId}</p>
+            <p className="text-[11px] font-mono text-slate-500">Reference: #{incidentId}</p>
           </div>
         </div>
 
         {/* Active Dispatch Indicators */}
-        <div className="space-y-1.5 text-xs text-slate-300 mb-4 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+        <div className="space-y-1.5 text-xs text-slate-700 mb-4 bg-white/90 p-3 rounded-2xl border border-slate-200/80 shadow-sm">
           <div className="flex items-center justify-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold text-slate-200">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-bold text-slate-800">
               Nearby police &amp; responders receiving telemetry
             </span>
           </div>
-          <div className="flex items-center justify-center gap-2 text-slate-400">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+          <div className="flex items-center justify-center gap-2 text-slate-600">
+            <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" />
             <span>Trusted emergency contacts notified</span>
           </div>
-          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 pt-1">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 pt-1">
+            <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span className="truncate max-w-[240px]">
               {location
                 ? addressText || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
@@ -430,10 +430,10 @@ export const SOSActivationPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Primary Action Button: Live Tracking */}
+        {/* Primary Action Button: Live Tracking — BOLD RED */}
         <button
           onClick={handleGoToTracking}
-          className="w-full py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-900/50 transition-colors"
+          className="w-full py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-red-500/40 transition-colors"
         >
           Track Live Response &amp; Responders
           <ChevronRight className="w-4 h-4" />
@@ -444,16 +444,16 @@ export const SOSActivationPage: React.FC = () => {
           OPTIONAL INCIDENT INFORMATION: Non-blocking post-SOS enrichment
           ───────────────────────────────────────────────────────────────────────── */}
       {!detailsSent ? (
-        <div className="bg-[#111827] border border-slate-800 rounded-3xl p-5 text-left mb-5">
+        <div className="bg-white border border-slate-200/90 rounded-3xl p-5 text-left mb-5 shadow-sm">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-sm sm:text-base font-bold text-white">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900">
               What happened? You can tell us if you're able.
             </h3>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-pink-700 bg-pink-50 border border-pink-200 px-2 py-0.5 rounded-full">
               Optional
             </span>
           </div>
-          <p className="text-xs text-slate-400 mb-4">
+          <p className="text-xs text-slate-500 mb-4">
             Alert is already dispatched. Providing details helps responders prepare the right equipment.
           </p>
 
@@ -468,8 +468,8 @@ export const SOSActivationPage: React.FC = () => {
                   onClick={() => setSelectedCategory(isSelected ? null : cat.type)}
                   className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold text-left transition-all ${
                     isSelected
-                      ? `bg-slate-800 ${cat.color} border-opacity-100 text-white ring-1 ring-white/20`
-                      : 'bg-slate-900/60 border-slate-800/80 text-slate-400 hover:border-slate-700'
+                      ? 'bg-pink-50 border-pink-400 text-pink-900 ring-2 ring-pink-500/20'
+                      : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:border-pink-300 hover:bg-pink-50/30'
                   }`}
                 >
                   <span className="shrink-0">{cat.icon}</span>
@@ -486,7 +486,7 @@ export const SOSActivationPage: React.FC = () => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Near bus stop, white vehicle, need urgent medical help..."
               rows={2}
-              className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-600 text-xs rounded-xl px-3.5 py-3 border border-slate-800 focus:outline-none focus:border-red-500/60 resize-none pr-10"
+              className="w-full bg-white text-slate-900 placeholder:text-slate-400 text-xs rounded-xl px-3.5 py-3 border border-slate-200 focus:outline-none focus:border-pink-500 shadow-sm resize-none pr-10"
             />
             {hasSpeechRecognition && (
               <button
@@ -494,8 +494,8 @@ export const SOSActivationPage: React.FC = () => {
                 onClick={startVoiceInput}
                 className={`absolute right-2.5 bottom-3 p-1.5 rounded-lg transition-colors ${
                   isListening
-                    ? 'text-red-400 bg-red-950/40 animate-pulse'
-                    : 'text-slate-500 hover:text-slate-300'
+                    ? 'text-pink-600 bg-pink-50 animate-pulse'
+                    : 'text-slate-400 hover:text-pink-600'
                 }`}
                 title="Dictate via voice input"
               >
@@ -509,16 +509,16 @@ export const SOSActivationPage: React.FC = () => {
             <button
               type="button"
               onClick={handleGoToTracking}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-700 text-slate-400 text-xs font-semibold hover:bg-slate-800 transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors shadow-sm"
             >
-              <SkipForward className="w-3.5 h-3.5" />
+              <SkipForward className="w-3.5 h-3.5 text-slate-400" />
               Skip for Now
             </button>
             <button
               type="button"
               onClick={handleSubmitDetails}
               disabled={isSubmittingDetails || (!selectedCategory && !description.trim())}
-              className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition-colors"
+              className="flex-1 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md shadow-pink-500/25 transition-colors"
             >
               {isSubmittingDetails ? 'Updating...' : 'Send Details to Responders'}
             </button>
@@ -526,15 +526,15 @@ export const SOSActivationPage: React.FC = () => {
         </div>
       ) : (
         /* Details successfully sent state */
-        <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl p-5 text-center mb-5 animate-fade-in">
-          <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-          <h4 className="text-sm font-bold text-white mb-1">Details Transmitted to Responders</h4>
-          <p className="text-xs text-slate-400 mb-4">
+        <div className="bg-white border border-emerald-300 rounded-3xl p-5 text-center mb-5 shadow-sm animate-fade-in">
+          <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+          <h4 className="text-sm font-bold text-slate-900 mb-1">Details Transmitted to Responders</h4>
+          <p className="text-xs text-slate-500 mb-4">
             Your notes and category have been updated in the live dispatch queue.
           </p>
           <button
             onClick={handleGoToTracking}
-            className="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-500/30"
           >
             Open Live Map &amp; Tracking
             <ChevronRight className="w-4 h-4" />
@@ -547,12 +547,12 @@ export const SOSActivationPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsCancelModalOpen(true)}
-          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-400 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-600 transition-colors font-medium"
         >
           <XCircle className="w-4 h-4" />
           Cancel Accidental SOS (False Alarm)
         </button>
-        <p className="text-[10px] text-slate-600 mt-1 max-w-xs mx-auto">
+        <p className="text-[10px] text-slate-400 mt-1 max-w-xs mx-auto">
           Cancellation informs dispatch units that assistance is no longer required.
         </p>
       </div>
@@ -561,7 +561,7 @@ export const SOSActivationPage: React.FC = () => {
       <div className="mt-4 text-center">
         <a
           href="tel:112"
-          className="inline-flex items-center gap-1.5 text-xs text-amber-500 hover:text-amber-400 font-semibold transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-800 font-bold transition-colors"
         >
           <PhoneCall className="w-3.5 h-3.5" />
           Call 112 directly if offline

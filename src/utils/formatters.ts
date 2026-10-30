@@ -10,37 +10,37 @@ export function formatIncidentStatus(status: IncidentStatus): {
     case 'OPEN':
       return {
         label: 'Broadcasting to Responders',
-        color: 'text-amber-400',
-        bgColor: 'bg-amber-500/10',
-        borderColor: 'border-amber-500/30',
+        color: 'text-amber-700',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-200',
       };
     case 'ASSIGNED':
       return {
         label: 'Responder Dispatched & En Route',
-        color: 'text-blue-400',
-        bgColor: 'bg-blue-500/10',
-        borderColor: 'border-blue-500/30',
+        color: 'text-pink-700',
+        bgColor: 'bg-pink-50',
+        borderColor: 'border-pink-200',
       };
     case 'ON_SCENE':
       return {
         label: 'Responder On Scene',
-        color: 'text-emerald-400',
-        bgColor: 'bg-emerald-500/10',
-        borderColor: 'border-emerald-500/30',
+        color: 'text-emerald-700',
+        bgColor: 'bg-emerald-50',
+        borderColor: 'border-emerald-200',
       };
     case 'RESOLVED':
       return {
         label: 'Incident Resolved',
-        color: 'text-slate-300',
-        bgColor: 'bg-slate-700/20',
-        borderColor: 'border-slate-600/30',
+        color: 'text-slate-700',
+        bgColor: 'bg-slate-100',
+        borderColor: 'border-slate-200',
       };
     case 'CANCELLED':
       return {
         label: 'Alert Cancelled',
-        color: 'text-rose-400',
-        bgColor: 'bg-rose-500/10',
-        borderColor: 'border-rose-500/30',
+        color: 'text-rose-700',
+        bgColor: 'bg-rose-50',
+        borderColor: 'border-rose-200',
       };
   }
 }

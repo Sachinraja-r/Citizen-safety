@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #080c14;
-  color: #f8fafc;
+  background-color: #f8fafc;
+  color: #0f172a;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -20,31 +20,31 @@ body {
   touch-action: manipulation;
 }
 
-/* Leaflet dark theme map tiles styling */
+/* Leaflet clean map container styling */
 .leaflet-container {
   width: 100%;
   height: 100%;
   border-radius: 0.75rem;
-  background: #0b0f17 !important;
+  background: #f1f5f9 !important;
   font-family: inherit;
   z-index: 10;
 }
 
-/* Invert map tiles for a night / dark emergency HUD feel */
+/* Light / subtle contrast map tiles */
 .dark-tiles .leaflet-tile-pane {
-  filter: brightness(0.65) invert(1) contrast(3) hue-rotate(200deg) saturate(0.35) brightness(0.7);
+  filter: contrast(1.05) brightness(0.98);
 }
 
 .leaflet-popup-content-wrapper {
-  background-color: #111827 !important;
-  color: #f8fafc !important;
-  border: 1px solid #334155 !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 0.75rem !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
 }
 
 .leaflet-popup-tip {
-  background-color: #111827 !important;
+  background-color: #ffffff !important;
 }
 
 /* Pulse animation utility */

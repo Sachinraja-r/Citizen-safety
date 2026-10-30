@@ -23,9 +23,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#080c14] flex flex-col items-center justify-center">
-        <LoadingSpinner size="lg" color="text-red-500" />
-        <p className="text-xs text-slate-400 mt-3 font-semibold tracking-wider uppercase">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <LoadingSpinner size="lg" color="text-pink-600" />
+        <p className="text-xs text-slate-500 mt-3 font-bold tracking-wider uppercase">
           Initializing Safety Protocol...
         </p>
       </div>

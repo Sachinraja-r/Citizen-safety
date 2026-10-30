@@ -19,30 +19,30 @@ export const TrustedContactsPreview: React.FC = () => {
   }, [user?.id]);
 
   return (
-    <div className="w-full text-left my-5 bg-[#111827] border border-slate-800 rounded-2xl p-4">
+    <div className="w-full text-left my-5 bg-white border border-slate-200/90 shadow-sm rounded-2xl p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-blue-400" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+          <Users className="w-4 h-4 text-pink-600" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
             Trusted Emergency Contacts ({contacts.length}/5)
           </h3>
         </div>
         <button
           onClick={() => navigate('/app/contacts')}
-          className="text-xs text-blue-400 font-semibold hover:text-blue-300 flex items-center gap-0.5"
+          className="text-xs text-pink-600 font-bold hover:text-pink-700 flex items-center gap-0.5"
         >
           Manage <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
 
       {loading ? (
-        <div className="py-3 text-center text-xs text-slate-500">Loading contacts...</div>
+        <div className="py-3 text-center text-xs text-slate-400">Loading contacts...</div>
       ) : contacts.length === 0 ? (
         <div className="py-4 text-center">
-          <p className="text-xs text-slate-400 mb-2">No trusted contacts added yet.</p>
+          <p className="text-xs text-slate-500 mb-2">No trusted contacts added yet.</p>
           <button
             onClick={() => navigate('/app/contacts')}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30"
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100 transition-colors"
           >
             <UserPlus className="w-3.5 h-3.5" /> Add Emergency Contact
           </button>
@@ -52,23 +52,23 @@ export const TrustedContactsPreview: React.FC = () => {
           {contacts.slice(0, 2).map((contact) => (
             <div
               key={contact.id}
-              className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80"
+              className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-200 truncate">{contact.name}</span>
+                  <span className="text-xs font-bold text-slate-800 truncate">{contact.name}</span>
                   {contact.priority === 1 && (
-                    <span className="text-[10px] bg-red-500/20 text-red-400 font-semibold px-1.5 py-0.2 rounded border border-red-500/30">
+                    <span className="text-[10px] bg-pink-50 text-pink-700 font-bold px-1.5 py-0.2 rounded border border-pink-200">
                       Primary
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400">{contact.phone} • {contact.relationship}</p>
+                <p className="text-[11px] text-slate-500">{contact.phone} • {contact.relationship}</p>
               </div>
 
               <a
                 href={`tel:${contact.phone}`}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-emerald-600/20 hover:text-emerald-400 text-slate-300 transition-colors border border-slate-700"
+                className="p-2 rounded-lg bg-white hover:bg-pink-50 text-pink-600 transition-colors border border-slate-200"
                 aria-label={`Call ${contact.name}`}
               >
                 <Phone className="w-4 h-4" />
