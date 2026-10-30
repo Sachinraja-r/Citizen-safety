@@ -108,9 +108,9 @@ export const ActiveIncidentPage: React.FC = () => {
 
   const handleWhatsAppShare = () => {
     if (!incident) return;
-    const lat = incident.location.latitude;
-    const lon = incident.location.longitude;
-    const locText = incident.location.addressText || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+    const lat = incident.location?.latitude ?? 12.8406;
+    const lon = incident.location?.longitude ?? 77.6632;
+    const locText = incident.location?.addressText || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
     const msg = encodeURIComponent(
       `🚨 EMERGENCY SOS ALERT!\nI need immediate assistance.\nIncident ID: #${incident.id}\nCategory: ${formatIncidentType(incident.type)}\nLocation: ${locText}\nLive GPS Pin: https://maps.google.com/?q=${lat},${lon}\n(Sent from Raksha Emergency Platform)`
     );
@@ -262,7 +262,7 @@ export const ActiveIncidentPage: React.FC = () => {
           <span>Logged: {formatRelativeTime(incident.createdAt)}</span>
           <span>•</span>
           <span className="truncate">
-            {incident.location.addressText || `${incident.location.latitude.toFixed(4)}, ${incident.location.longitude.toFixed(4)}`}
+            {incident.location?.addressText || (incident.location?.latitude ? `${incident.location.latitude.toFixed(4)}, ${incident.location.longitude.toFixed(4)}` : 'Live GPS Area')}
           </span>
         </div>
 

@@ -303,7 +303,7 @@ export const SOSActivationPage: React.FC = () => {
               Incident Location
             </span>
             <span className="text-[#2D1B24] font-semibold truncate block">
-              {location
+              {location && typeof location.latitude === 'number'
                 ? addressText || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
                 : 'Acquiring GPS coordinates (using secure city centroid)'}
             </span>
@@ -425,7 +425,7 @@ export const SOSActivationPage: React.FC = () => {
           <div className="flex items-center justify-center gap-2 text-[11px] text-[#7A6570] pt-1">
             <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span className="truncate max-w-[240px]">
-              {location
+              {location && typeof location.latitude === 'number'
                 ? addressText || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
                 : 'City area default (GPS ungranted)'}
               {accuracy ? ` (±${accuracy}m)` : ''}

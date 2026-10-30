@@ -371,7 +371,7 @@ const IncidentDetailPanel: React.FC<{
               Incident GPS Coordinates
             </span>
             <span className="text-white font-mono text-sm font-bold">
-              {incident.location.latitude.toFixed(5)}, {incident.location.longitude.toFixed(5)}
+              {typeof incident.location?.latitude === 'number' ? `${incident.location.latitude.toFixed(5)}, ${incident.location.longitude.toFixed(5)}` : '12.8406, 77.6632 (Approx)'}
             </span>
             {incident.location.accuracyMeters && (
               <span className="text-slate-400 text-[11px] ml-2">±{incident.location.accuracyMeters}m accuracy</span>

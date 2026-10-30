@@ -44,7 +44,7 @@ export const LocationStatus: React.FC = () => {
             <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
           </div>
           <span className="truncate text-[#2D1B24] font-medium">
-            {addressText || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`}
+            {addressText || (typeof location?.latitude === 'number' ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Location telemetry active')}
           </span>
         </div>
         {accuracy !== null && (

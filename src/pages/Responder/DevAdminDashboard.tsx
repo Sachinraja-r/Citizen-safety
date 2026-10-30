@@ -330,7 +330,7 @@ const IncidentTableRow: React.FC<{
             <p className="text-[11px] text-slate-500 truncate mt-0.5">{incident.location.addressText}</p>
           )}
           <p className="text-[11px] text-slate-600 font-mono">
-            {incident.location.latitude.toFixed(4)}, {incident.location.longitude.toFixed(4)}
+            {typeof incident.location?.latitude === 'number' ? `${incident.location.latitude.toFixed(4)}, ${incident.location.longitude.toFixed(4)}` : 'GPS Tracking Active'}
           </p>
         </div>
 

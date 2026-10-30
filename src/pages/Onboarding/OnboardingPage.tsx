@@ -212,7 +212,7 @@ export const OnboardingPage: React.FC = () => {
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Location Granted Successfully
                   </div>
                   <p className="text-slate-700">
-                    Coordinates: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+                    Coordinates: {typeof location.latitude === 'number' ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Live GPS active'}
                   </p>
                   {accuracy && <p className="text-slate-500 text-[11px]">Accuracy: ±{accuracy}m</p>}
                 </div>

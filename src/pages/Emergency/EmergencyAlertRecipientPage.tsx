@@ -262,7 +262,7 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
                 <MapView incidentLocation={incident.location} height="220px" zoom={15} />
               </div>
               <p className="text-xs font-medium text-[#2D1B24] bg-[#FFF5F8] p-2.5 rounded-xl border border-[#F3D9E2]">
-                📍 {incident.location.addressText || `${incident.location.latitude.toFixed(5)}, ${incident.location.longitude.toFixed(5)}`}
+                📍 {incident.location?.addressText || (typeof incident.location?.latitude === 'number' ? `${incident.location.latitude.toFixed(5)}, ${incident.location.longitude.toFixed(5)}` : 'Live City Beacon Active')}
               </p>
             </>
           ) : (

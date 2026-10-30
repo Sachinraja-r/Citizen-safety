@@ -149,7 +149,7 @@ export const ProfilePage: React.FC = () => {
 
         {location && (
           <div className="bg-[#FFF5F8] p-2.5 rounded-xl border border-[#F3D9E2] text-xs font-mono text-[#2D1B24]">
-            Latitude: {location.latitude.toFixed(6)} | Longitude: {location.longitude.toFixed(6)}
+            Latitude: {typeof location.latitude === 'number' ? location.latitude.toFixed(6) : 'N/A'} | Longitude: {typeof location.longitude === 'number' ? location.longitude.toFixed(6) : 'N/A'}
             {accuracy && <div className="text-[11px] text-[#7A6570] mt-1 font-sans">Accuracy: ±{accuracy} meters</div>}
           </div>
         )}
