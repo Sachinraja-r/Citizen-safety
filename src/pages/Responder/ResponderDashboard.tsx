@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LiveIncidentFeed } from '../../types/responder';
 import { ResponderSession } from '../../types/responder';
 import { incidentFeedService } from '../../services/incidentFeedService';
-import { responderAuthService } from '../../services/responderAuthService';
+import { responderAuthService, DEMO_RESPONDERS } from '../../services/responderAuthService';
 import { MapView } from '../../components/maps/MapView';
 import { formatIncidentType, formatRelativeTime, formatIncidentStatus } from '../../utils/formatters';
 import {
@@ -37,8 +37,12 @@ export const ResponderDashboard: React.FC = () => {
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
   useEffect(() => {
-    const s = responderAuthService.getCurrentSession();
-    if (!s) { navigate('/responder'); return; }
+    let s = responderAuthService.getCurrentSession();
+    if (!s) {
+      // Default to demo Paramedic Suresh V. (matching tactical operations) so direct visits never bounce
+      s = DEMO_RESPONDERS[2];
+      responderAuthService.login(s.id);
+    }
     setSession(s);
 
     incidentFeedService.getAllIncidents().then((data) => {

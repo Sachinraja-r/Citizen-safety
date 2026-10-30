@@ -119,19 +119,26 @@ export const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="w-full border-t border-[#F3D9E2] py-5 text-center text-xs text-[#7A6570] bg-white/60">
         <p>Raksha Safety Platform • Mobile PWA &amp; Emergency Dispatch Architecture</p>
-        <p className="mt-2">
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
           <a
-            href="/responder"
-            className="text-[#E91E63] hover:text-[#D81B60] underline underline-offset-2 transition-colors font-medium"
+            href="/responder/dashboard"
+            className="text-[#E91E63] hover:text-[#D81B60] underline underline-offset-2 transition-colors font-semibold"
           >
-            🚔 Police / Responder Portal →
+            🚔 Responder Command Center →
           </a>
-          <span className="mx-3 text-[#F3D9E2]">|</span>
+          <span className="text-[#F3D9E2]">|</span>
           <a
             href="/responder/dev"
             className="text-[#7A6570] hover:text-[#2D1B24] underline underline-offset-2 transition-colors font-medium"
           >
-            🛠 Developer Admin Dashboard →
+            🛠 Developer Operations →
+          </a>
+          <span className="text-[#F3D9E2]">|</span>
+          <a
+            href="/api/triage"
+            className="text-[#7A6570] hover:text-[#2D1B24] underline underline-offset-2 transition-colors font-medium"
+          >
+            🤖 AI Triage API Console →
           </a>
         </p>
       </footer>

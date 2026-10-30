@@ -418,9 +418,158 @@ export const incidentService = {
 
   getAllLocalIncidents(): Incident[] {
     const raw = localStorage.getItem(INCIDENTS_STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) {
+      // Default demo incidents matching tactical operations (Alliance University / Anekal area)
+      const defaultIncidents: Incident[] = [
+        {
+          id: 'INC-110281',
+          userId: 'demo-user-101',
+          type: 'SOS_EMERGENCY',
+          severity: 'CRITICAL',
+          status: 'ON_SCENE',
+          description: 'Emergency SOS beacon activated by citizen handset',
+          location: {
+            latitude: 12.73168,
+            longitude: 77.70788,
+            accuracyMeters: 77,
+            addressText: 'Alliance University, Alliance University Service Road, Chikkahagade, Bengaluru',
+          },
+          createdAt: new Date(Date.now() - 60000).toISOString(),
+          updatedAt: new Date(Date.now() - 30000).toISOString(),
+          assignedResponder: {
+            id: 'resp-para-03',
+            name: 'Paramedic Suresh V.',
+            type: 'AMBULANCE',
+            status: 'BUSY',
+            verifiedLevel: 'VERIFIED_PARAMEDIC',
+            etaMinutes: 0,
+            location: {
+              latitude: 12.73200,
+              longitude: 77.70820,
+              timestamp: Date.now(),
+            },
+          },
+          timeline: [
+            {
+              id: 'evt-1',
+              timestamp: new Date(Date.now() - 60000).toISOString(),
+              status: 'OPEN',
+              title: 'Immediate SOS Emergency Broadcasted',
+              description: 'Emergency SOS beacon activated by citizen handset.',
+              actor: 'Citizen',
+            },
+            {
+              id: 'evt-2',
+              timestamp: new Date(Date.now() - 40000).toISOString(),
+              status: 'ASSIGNED',
+              title: 'Paramedic Suresh V. En Route',
+              description: 'Emergency medical unit KSEMS-0312 dispatched.',
+              actor: 'Paramedic Suresh V.',
+            },
+            {
+              id: 'evt-3',
+              timestamp: new Date(Date.now() - 15000).toISOString(),
+              status: 'ON_SCENE',
+              title: 'Responder On Scene',
+              description: 'First responder reached citizen location at Alliance University.',
+              actor: 'Paramedic Suresh V.',
+            },
+          ],
+        },
+        {
+          id: 'INC-469876',
+          userId: 'demo-user-102',
+          type: 'SOS_EMERGENCY',
+          severity: 'CRITICAL',
+          status: 'ON_SCENE',
+          description: 'Emergency SOS beacon activated by citizen handset',
+          location: {
+            latitude: 12.73240,
+            longitude: 77.70890,
+            accuracyMeters: 80,
+            addressText: 'Alliance University, Alliance University Service Road, Chikkahagade',
+          },
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+          updatedAt: new Date(Date.now() - 3000000).toISOString(),
+          assignedResponder: {
+            id: 'resp-police-02',
+            name: 'SI. Rajan Kumar',
+            type: 'PATROL_CAR',
+            status: 'BUSY',
+            verifiedLevel: 'VERIFIED_OFFICER',
+            etaMinutes: 0,
+          },
+          timeline: [],
+        },
+        {
+          id: 'INC-267034',
+          userId: 'demo-user-103',
+          type: 'SOS_EMERGENCY',
+          severity: 'CRITICAL',
+          status: 'ON_SCENE',
+          description: 'Emergency SOS beacon activated by citizen handset',
+          location: {
+            latitude: 12.73010,
+            longitude: 77.70550,
+            accuracyMeters: 65,
+            addressText: 'Chikkahagade Main Road, Anekal Taluk',
+          },
+          createdAt: new Date(Date.now() - 7200000).toISOString(),
+          updatedAt: new Date(Date.now() - 6000000).toISOString(),
+          assignedResponder: {
+            id: 'resp-pink-01',
+            name: 'Sub-Insp. Priya Menon',
+            type: 'FEMALE_OFFICER_UNIT',
+            status: 'BUSY',
+            verifiedLevel: 'VERIFIED_OFFICER',
+            etaMinutes: 0,
+          },
+          timeline: [],
+        },
+        {
+          id: 'INC-578019',
+          userId: 'demo-user-104',
+          type: 'SOS_EMERGENCY',
+          severity: 'CRITICAL',
+          status: 'OPEN',
+          description: 'Emergency distress beacon broadcasted to nearby responders',
+          location: {
+            latitude: 12.73450,
+            longitude: 77.71120,
+            accuracyMeters: 40,
+            addressText: 'Anekal Road near TVS Motors junction',
+          },
+          createdAt: new Date(Date.now() - 7200000).toISOString(),
+          updatedAt: new Date(Date.now() - 7000000).toISOString(),
+          timeline: [],
+        },
+        {
+          id: 'INC-668589',
+          userId: 'demo-user-105',
+          type: 'SOS_EMERGENCY',
+          severity: 'CRITICAL',
+          status: 'ON_SCENE',
+          description: 'Emergency SOS beacon activated by citizen handset',
+          location: {
+            latitude: 12.72890,
+            longitude: 77.71450,
+            accuracyMeters: 75,
+            addressText: 'Karpuru Road, Anekal',
+          },
+          createdAt: new Date(Date.now() - 7200000).toISOString(),
+          updatedAt: new Date(Date.now() - 6500000).toISOString(),
+          timeline: [],
+        },
+      ];
+      try {
+        localStorage.setItem(INCIDENTS_STORAGE_KEY, JSON.stringify(defaultIncidents));
+      } catch { /* ignore storage quotas */ }
+      return defaultIncidents;
+    }
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      return [];
     } catch {
       return [];
     }

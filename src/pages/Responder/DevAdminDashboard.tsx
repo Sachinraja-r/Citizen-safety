@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LiveIncidentFeed } from '../../types/responder';
 import { incidentFeedService } from '../../services/incidentFeedService';
 import { incidentService } from '../../services/incidentService';
-import { responderAuthService } from '../../services/responderAuthService';
+import { responderAuthService, DEMO_RESPONDERS } from '../../services/responderAuthService';
 import { MapView } from '../../components/maps/MapView';
 import { formatIncidentType, formatRelativeTime } from '../../utils/formatters';
 import { isSupabaseConfigured } from '../../services/supabase';
@@ -33,8 +33,11 @@ export const DevAdminDashboard: React.FC = () => {
   const supabaseOk = isSupabaseConfigured();
 
   useEffect(() => {
-    const session = responderAuthService.getCurrentSession();
-    if (!session) { navigate('/responder'); return; }
+    let session = responderAuthService.getCurrentSession();
+    if (!session) {
+      session = DEMO_RESPONDERS[3]; // Developer Admin
+      responderAuthService.login(session.id);
+    }
 
     loadIncidents();
 
