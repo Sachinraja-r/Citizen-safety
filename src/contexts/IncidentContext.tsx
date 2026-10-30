@@ -16,6 +16,10 @@ interface IncidentContextType {
   }) => Promise<{ incident: Incident | null; error: Error | null }>;
   resolveCurrentIncident: (reason?: string) => Promise<boolean>;
   cancelCurrentIncident: (reason: string) => Promise<boolean>;
+  updateIncidentDetails: (
+    id: string,
+    details: { type?: IncidentType; description?: string }
+  ) => Promise<boolean>;
   refreshActiveIncident: () => Promise<void>;
 }
 
@@ -170,6 +174,47 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return false;
   };
 
+  const updateIncidentDetails = async (
+    id: string,
+    details: { type?: IncidentType; description?: string }
+  ): Promise<boolean> => {
+    const { success, error: err } = await incidentService.updateIncidentDetails(id, details);
+    if (success) {
+      await refreshActiveIncident();
+
+      // Background AI triage enrichment with the newly provided details
+      if (details.description || details.type) {
+        const fullDesc = [details.type ? `Category: ${details.type}` : '', details.description || '']
+          .filter(Boolean)
+          .join('. ');
+        aiTriageService
+          .analyzeEmergencyReport({
+            text: fullDesc,
+            location: activeIncident?.location,
+            userId: user?.id,
+          })
+          .then((triage) => {
+            if (triage) {
+              const current = incidentService.getAllLocalIncidents().find((i) => i.id === id);
+              if (current) {
+                current.aiTriage = triage;
+                incidentService.saveIncidentLocally(current);
+                incidentService.notifyListeners(current);
+                if (activeIncident?.id === id) {
+                  setActiveIncident({ ...current });
+                }
+              }
+            }
+          })
+          .catch(() => {});
+      }
+
+      return true;
+    }
+    if (err) setError(err.message);
+    return false;
+  };
+
   return (
     <IncidentContext.Provider
       value={{
@@ -180,6 +225,7 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         triggerSOS,
         resolveCurrentIncident,
         cancelCurrentIncident,
+        updateIncidentDetails,
         refreshActiveIncident,
       }}
     >

@@ -256,6 +256,56 @@ export const incidentService = {
     return { success: true, error: null };
   },
 
+  async updateIncidentDetails(
+    id: string,
+    details: { type?: IncidentType; description?: string }
+  ): Promise<{ success: boolean; error: Error | null }> {
+    const incident = await this.getIncident(id);
+    if (!incident) {
+      return { success: false, error: new Error('Incident not found') };
+    }
+
+    if (details.type) incident.type = details.type;
+    if (details.description) incident.description = details.description;
+    incident.updatedAt = new Date().toISOString();
+
+    incident.timeline.push({
+      id: 'evt-' + Date.now(),
+      timestamp: incident.updatedAt,
+      status: incident.status,
+      title: 'Incident Details Provided',
+      description: details.description
+        ? `Citizen reported: "${details.description}" (${details.type || incident.type})`
+        : `Category updated to: ${details.type}`,
+      actor: 'Citizen',
+    });
+
+    this.saveIncidentLocally(incident);
+    this.notifyListeners(incident);
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const updatePayload: Record<string, unknown> = {
+          updated_at: incident.updatedAt,
+          timeline: incident.timeline,
+        };
+        if (details.type) updatePayload.type = details.type;
+        if (details.description) updatePayload.description = details.description;
+
+        const { error } = await supabase
+          .from('incidents')
+          .update(updatePayload)
+          .eq('id', id);
+
+        if (error) throw error;
+      } catch (err) {
+        return { success: false, error: err as Error };
+      }
+    }
+
+    return { success: true, error: null };
+  },
+
   subscribeToIncident(id: string, callback: IncidentCallback): () => void {
     listeners.add(callback);
 

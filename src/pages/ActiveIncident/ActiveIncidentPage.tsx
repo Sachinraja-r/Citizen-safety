@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIncident } from '../../contexts/IncidentContext';
 import { incidentService } from '../../services/incidentService';
-import { Incident } from '../../types';
+import { Incident, IncidentType } from '../../types';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Button } from '../../components/common/Button';
 import { MapView } from '../../components/maps/MapView';
@@ -10,17 +10,51 @@ import { ResponderCard } from '../../components/emergency/ResponderCard';
 import { IncidentTimeline } from '../../components/emergency/IncidentTimeline';
 import { CancelIncidentModal } from '../../components/emergency/CancelIncidentModal';
 import { formatIncidentType, formatRelativeTime } from '../../utils/formatters';
-import { ArrowLeft, CheckCircle2, XCircle, Sparkles, AlertOctagon, PhoneCall } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  AlertOctagon,
+  PhoneCall,
+  Share2,
+  Edit3,
+  Check,
+  X,
+} from 'lucide-react';
+
+const CATEGORY_OPTIONS: { type: IncidentType; label: string }[] = [
+  { type: 'SOS_EMERGENCY', label: 'General / Critical SOS' },
+  { type: 'MEDICAL_EMERGENCY', label: 'Medical Emergency' },
+  { type: 'PHYSICAL_HARASSMENT_STALKING', label: 'Harassment / Stalking' },
+  { type: 'DOMESTIC_VIOLENCE', label: 'Violence / Assault' },
+  { type: 'SUSPICIOUS_ACTIVITY', label: 'Suspicious Activity' },
+  { type: 'THEFT_OR_ROBBERY', label: 'Theft / Robbery' },
+  { type: 'OTHER', label: 'Other' },
+];
 
 export const ActiveIncidentPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { activeIncident, resolveCurrentIncident, cancelCurrentIncident } = useIncident();
+  const {
+    activeIncident,
+    resolveCurrentIncident,
+    cancelCurrentIncident,
+    updateIncidentDetails,
+  } = useIncident();
 
   const [incident, setIncident] = useState<Incident | null>(activeIncident);
   const [loading, setLoading] = useState(!activeIncident || activeIncident.id !== id);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Correction / Detail update states
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedType, setSelectedType] = useState<IncidentType>(
+    incident?.type || 'SOS_EMERGENCY'
+  );
+  const [notes, setNotes] = useState(incident?.description || '');
+  const [isSavingDetails, setIsSavingDetails] = useState(false);
 
   // Subscribe to live updates for this incident
   useEffect(() => {
@@ -44,8 +78,41 @@ export const ActiveIncidentPage: React.FC = () => {
   useEffect(() => {
     if (activeIncident && activeIncident.id === id) {
       setIncident(activeIncident);
+      setSelectedType(activeIncident.type);
+      setNotes(activeIncident.description || '');
     }
   }, [activeIncident, id]);
+
+  const handleSaveDetails = async () => {
+    if (!incident) return;
+    setIsSavingDetails(true);
+    await updateIncidentDetails(incident.id, {
+      type: selectedType,
+      description: notes.trim() || undefined,
+    });
+    setIncident((prev) =>
+      prev
+        ? {
+            ...prev,
+            type: selectedType,
+            description: notes.trim() || prev.description,
+          }
+        : null
+    );
+    setIsSavingDetails(false);
+    setIsEditing(false);
+  };
+
+  const handleWhatsAppShare = () => {
+    if (!incident) return;
+    const lat = incident.location.latitude;
+    const lon = incident.location.longitude;
+    const locText = incident.location.addressText || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+    const msg = encodeURIComponent(
+      `🚨 EMERGENCY SOS ALERT!\nI need immediate assistance.\nIncident ID: #${incident.id}\nCategory: ${formatIncidentType(incident.type)}\nLocation: ${locText}\nLive GPS Pin: https://maps.google.com/?q=${lat},${lon}\n(Sent from Raksha Emergency Platform)`
+    );
+    window.open(`https://wa.me/?text=${msg}`, '_blank');
+  };
 
   const handleResolve = async () => {
     if (!incident) return;
@@ -113,8 +180,80 @@ export const ActiveIncidentPage: React.FC = () => {
               {formatIncidentType(incident.type)}
             </h1>
           </div>
-          <StatusBadge status={incident.status} />
+          <div className="flex items-center gap-2">
+            {!isClosed && !isEditing && (
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="text-[11px] font-semibold text-slate-400 hover:text-slate-200 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 inline-flex items-center gap-1 transition-colors"
+                title="Update category or add details"
+              >
+                <Edit3 className="w-3 h-3 text-slate-400" />
+                Update Details
+              </button>
+            )}
+            <StatusBadge status={incident.status} />
+          </div>
         </div>
+
+        {/* Category & Description Editor (if editing) */}
+        {isEditing && (
+          <div className="my-3 p-3.5 rounded-xl bg-slate-900 border border-blue-500/40 space-y-3 animate-fade-in">
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                Select / Correct Incident Category
+              </label>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value as IncidentType)}
+                className="w-full bg-[#111827] text-slate-100 text-xs rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:border-blue-500"
+              >
+                {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c.type} value={c.type}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                Optional Description / Notes
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any specific location landmarks or immediate hazard description..."
+                rows={2}
+                className="w-full bg-[#111827] text-slate-100 placeholder:text-slate-600 text-xs rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:border-blue-500 resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedType(incident.type);
+                  setNotes(incident.description || '');
+                  setIsEditing(false);
+                }}
+                className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 text-xs font-semibold hover:bg-slate-800"
+              >
+                <X className="w-3.5 h-3.5 inline mr-1" />
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveDetails}
+                disabled={isSavingDetails}
+                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5 inline mr-1" />
+                {isSavingDetails ? 'Updating...' : 'Save & Notify Responders'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-3 text-xs text-slate-400 pt-2 border-t border-slate-800/80">
           <span>Logged: {formatRelativeTime(incident.createdAt)}</span>
@@ -124,7 +263,7 @@ export const ActiveIncidentPage: React.FC = () => {
           </span>
         </div>
 
-        {incident.description && (
+        {incident.description && !isEditing && (
           <p className="text-xs text-slate-300 mt-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
             "{incident.description}"
           </p>
@@ -159,14 +298,19 @@ export const ActiveIncidentPage: React.FC = () => {
       {/* AI Triage Intelligence Enrichment (Member 3) */}
       {incident.aiTriage && (
         <div className="bg-[#111827] border border-purple-500/30 rounded-2xl p-4 text-left">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-purple-600/20 rounded-lg text-purple-400 border border-purple-500/30">
-              <Sparkles className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-purple-600/20 rounded-lg text-purple-400 border border-purple-500/30">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white">AI Emergency Triage Insights</h4>
+                <p className="text-[10px] text-slate-400">Processed by Member 3 AI Engine</p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-xs font-bold text-white">AI Emergency Triage Insights</h4>
-              <p className="text-[10px] text-slate-400">Processed by Raksha AI Engine</p>
-            </div>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-purple-300 bg-purple-950/60 px-2 py-0.5 rounded-full border border-purple-500/30">
+              AI Suggestion • Unverified
+            </span>
           </div>
 
           <div className="text-xs text-slate-300 bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-1.5">
@@ -186,6 +330,26 @@ export const ActiveIncidentPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* WhatsApp Sharing Fallback (User-Initiated) */}
+      <div className="p-3.5 bg-slate-900/60 border border-slate-800 rounded-2xl text-left space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-300">
+            Emergency WhatsApp Share
+          </span>
+          <button
+            type="button"
+            onClick={handleWhatsAppShare}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-600/30 transition-colors"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            Share via WhatsApp
+          </button>
+        </div>
+        <p className="text-[10px] text-slate-500 leading-tight">
+          User-initiated: Opens WhatsApp with pre-filled GPS coordinates. You must tap &quot;Send&quot; in WhatsApp to deliver the message.
+        </p>
+      </div>
 
       {/* Incident Event Timeline */}
       <IncidentTimeline currentStatus={incident.status} events={incident.timeline} />

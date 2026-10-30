@@ -125,6 +125,35 @@ describe('User Journey 4, 5, 6: Dashboard SOS Trigger & Incident Creation', () =
     assert.ok(active);
     assert.strictEqual(active.id, incident.id);
   });
+
+  test('SOS-first: User supplies optional category and description AFTER SOS is dispatched', async () => {
+    const { incidentService } = await import('../src/services/incidentService');
+
+    // 1. Initial immediate SOS creation without prior category or user typing
+    const { incident, error } = await incidentService.createIncident({
+      userId: 'test-citizen-999',
+      type: 'SOS_EMERGENCY',
+      severity: 'CRITICAL',
+      location: { latitude: 12.9716, longitude: 77.5946 },
+    });
+
+    assert.strictEqual(error, null);
+    assert.ok(incident);
+    assert.strictEqual(incident.type, 'SOS_EMERGENCY');
+
+    // 2. Post-SOS: user optionally selects 'PHYSICAL_HARASSMENT_STALKING' and provides text
+    const updateRes = await incidentService.updateIncidentDetails(incident.id, {
+      type: 'PHYSICAL_HARASSMENT_STALKING',
+      description: 'Suspicious vehicle tailing me on 80ft road',
+    });
+
+    assert.strictEqual(updateRes.success, true);
+
+    const refreshed = await incidentService.getIncident(incident.id);
+    assert.strictEqual(refreshed?.type, 'PHYSICAL_HARASSMENT_STALKING');
+    assert.strictEqual(refreshed?.description, 'Suspicious vehicle tailing me on 80ft road');
+    assert.ok(refreshed?.timeline.length >= 2);
+  });
 });
 
 describe('User Journey 7 & 8: Active Incident Tracking & Status Updates', () => {
