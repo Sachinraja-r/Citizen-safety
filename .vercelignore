@@ -7,3 +7,11 @@ node_modules
 *.log
 tests
 C:\Users\USER\OneDrive\Desktop\frontend\tests
+
+# Backend & Python ML (deployed separately or via serverless /api)
+backend/
+*.safetensors
+*.bin
+training_data*.json
+create_dataset*.py
+*.py
