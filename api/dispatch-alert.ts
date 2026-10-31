@@ -145,54 +145,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
 
-        // 3. Automated India SMS via Fast2SMS (if configured)
+        // 3. Automated India SMS via Fast2SMS (Quick route — GET request, no DLT template needed)
         if (fast2SmsApiKey) {
           try {
             const rawDigits = cleanPhone.replace(/^\+91/, '').replace(/\D/g, '');
-            console.log(`[Fast2SMS] Key present: YES | Digits: ${rawDigits} | Length: ${rawDigits.length}`);
+            console.log(`[Fast2SMS] Digits: ${rawDigits} | Length: ${rawDigits.length}`);
             if (rawDigits.length === 10) {
-              // Fast2SMS q-route is strict: no URLs, no promotional text, keep it short & plain
-              // Send GPS coords directly — contact can paste into maps app
+              // Clean message — no emojis, no special chars
               const smsText = [
-                `SOS ALERT from ${(victimName || 'Citizen').replace(/[^\x00-\x7F]/g, '')}`,
+                `SOS ALERT from ${(victimName || 'Citizen').replace(/[^\x00-\x7F]/g, '').trim()}`,
                 `GPS: ${lat.toFixed(6)},${lon.toFixed(6)}`,
-                address ? `Area: ${address.replace(/[^\x00-\x7F]/g, '').substring(0, 60)}` : '',
-                `Incident: ${incidentId}`,
-                `Call 112 immediately!`,
-              ].filter(Boolean).join('\n');
+                address ? `Area: ${address.replace(/[^\x00-\x7F]/g, '').substring(0, 50)}` : '',
+                `Ref: ${incidentId}`,
+                `Call 112 now!`,
+              ].filter(Boolean).join('. ');
 
-              const f2Payload = {
-                route: 'v3',
-                sender_id: 'FSTSMS',   // Fast2SMS default sender ID for new accounts
+              // q route uses GET with query params (per updated Fast2SMS docs)
+              const params = new URLSearchParams({
+                route: 'q',
                 message: smsText,
-                language: 'english',
-                flash: 0,
                 numbers: rawDigits,
-              };
-              console.log(`[Fast2SMS] SMS text: ${smsText}`);
-              const f2Res = await fetch('https://www.fast2sms.com/dev/bulkV2', {
-                method: 'POST',
-                headers: {
-                  authorization: fast2SmsApiKey,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(f2Payload),
               });
+              console.log(`[Fast2SMS] Sending GET | msg: ${smsText}`);
+              const f2Res = await fetch(
+                `https://www.fast2sms.com/dev/bulkV2?${params.toString()}`,
+                {
+                  method: 'GET',
+                  headers: {
+                    authorization: fast2SmsApiKey,
+                    accept: 'application/json',
+                  },
+                }
+              );
               const f2Body = await f2Res.json().catch(() => ({})) as any;
-              console.log(`[Fast2SMS] Response status: ${f2Res.status} | Body:`, JSON.stringify(f2Body));
+              console.log(`[Fast2SMS] Status: ${f2Res.status} | Body:`, JSON.stringify(f2Body));
               if (f2Body?.return === true) {
                 dispatchChannels.push('FAST2SMS_CARRIER_GATEWAY');
               } else {
-                console.warn('[Fast2SMS] Delivery failed:', f2Body?.message || f2Body);
+                console.warn('[Fast2SMS] Failed:', f2Body?.message || JSON.stringify(f2Body));
               }
             } else {
-              console.warn(`[Fast2SMS] Phone number invalid length (${rawDigits.length} digits), skipping.`);
+              console.warn(`[Fast2SMS] Invalid phone length (${rawDigits.length}), skipping.`);
             }
           } catch (f2Err: any) {
             console.warn('Fast2SMS exception:', f2Err.message);
           }
         } else {
-          console.log('[Fast2SMS] FAST2SMS_API_KEY env var not set — skipping.');
+          console.log('[Fast2SMS] API key not set.');
         }
 
         // 4. Custom Telco Dispatch Webhook (if configured)
