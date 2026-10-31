@@ -54,11 +54,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const dangerMessage =
       messageText ||
-      `🚨 EMERGENCY SOS: I AM IN DANGER!\n` +
+      `EMERGENCY SOS: I AM IN DANGER!\n` +
       `Distress alert from ${victimName || 'Citizen'}.\n` +
       `Live Location: ${mapsPin}\n` +
       `Address: ${address}\n` +
-      `Incident: #${incidentId}`;
+      `Incident: #${incidentId}\n` +
+      `Call police/emergency responders immediately!`;
 
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -150,12 +151,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const rawDigits = cleanPhone.replace(/^\+91/, '').replace(/\D/g, '');
             console.log(`[Fast2SMS] Key present: YES | Digits: ${rawDigits} | Length: ${rawDigits.length}`);
             if (rawDigits.length === 10) {
+              // Strip ALL emojis and non-ASCII — Fast2SMS spam filter blocks them
+              const smsText = dangerMessage
+                .replace(/[^\x00-\x7F]/g, '')   // remove all non-ASCII (emojis, special chars)
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+
               const f2Payload = {
-                route: 'q',
-                message: dangerMessage,
+                route: 'q',          // Quick route — no sender ID needed
+                message: smsText,
                 flash: 0,
                 numbers: rawDigits,
               };
+              console.log(`[Fast2SMS] Message (sanitised): ${smsText.substring(0, 80)}...`);
               const f2Res = await fetch('https://www.fast2sms.com/dev/bulkV2', {
                 method: 'POST',
                 headers: {
@@ -166,7 +174,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               });
               const f2Body = await f2Res.json().catch(() => ({})) as any;
               console.log(`[Fast2SMS] Response status: ${f2Res.status} | Body:`, JSON.stringify(f2Body));
-              if (f2Res.ok && f2Body?.return !== false) {
+              if (f2Body?.return === true) {
                 dispatchChannels.push('FAST2SMS_CARRIER_GATEWAY');
               } else {
                 console.warn('[Fast2SMS] Delivery failed:', f2Body?.message || f2Body);
