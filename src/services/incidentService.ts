@@ -467,63 +467,76 @@ export const incidentService = {
     listeners.add(callback);
 
     // If Supabase Realtime is available
-    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+    let channel: any = null;
     if (isSupabaseConfigured() && supabase) {
-      channel = supabase
-        .channel(`incident-realtime-${id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'incidents',
-            filter: `id=eq.${id}`,
-          },
-          async (payload) => {
-            const row = payload.new as any;
-            const respId =
-              row.assigned_responder_id ||
-              row.assigned_responder?.id ||
-              row.assigned_responder;
-            const responder = await resolveResponder(respId, {
-              latitude: row.latitude,
-              longitude: row.longitude,
-            });
+      try {
+        const uniqueChannel = `incident-rt-${id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        channel = supabase
+          .channel(uniqueChannel)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'incidents',
+              filter: `id=eq.${id}`,
+            },
+            async (payload) => {
+              try {
+                const row = payload.new as any;
+                const respId =
+                  row.assigned_responder_id ||
+                  row.assigned_responder?.id ||
+                  row.assigned_responder;
+                const responder = await resolveResponder(respId, {
+                  latitude: row.latitude,
+                  longitude: row.longitude,
+                });
 
-            const updated: Incident = {
-              id: row.id,
-              userId: row.user_id,
-              type: row.type,
-              severity: row.severity,
-              status: row.status,
-              description: row.description,
-              location: {
-                latitude: row.latitude,
-                longitude: row.longitude,
-                accuracyMeters: row.accuracy_meters,
-                addressText: row.address_text,
-              },
-              createdAt: row.created_at,
-              updatedAt: row.updated_at,
-              resolvedAt: row.resolved_at,
-              cancelledAt: row.cancelled_at,
-              cancellationReason: row.cancellation_reason,
-              assignedResponder: responder || undefined,
-              timeline: row.timeline || [],
-              aiTriage: row.ai_triage,
-            };
-            this.saveIncidentLocally(updated);
-            callback(updated);
-          }
-        )
-        .subscribe();
+                const updated: Incident = {
+                  id: row.id,
+                  userId: row.user_id,
+                  type: row.type,
+                  severity: row.severity,
+                  status: row.status,
+                  description: row.description,
+                  location: {
+                    latitude: row.latitude,
+                    longitude: row.longitude,
+                    accuracyMeters: row.accuracy_meters,
+                    addressText: row.address_text,
+                  },
+                  createdAt: row.created_at,
+                  updatedAt: row.updated_at,
+                  resolvedAt: row.resolved_at,
+                  cancelledAt: row.cancelled_at,
+                  cancellationReason: row.cancellation_reason,
+                  assignedResponder: responder || undefined,
+                  timeline: row.timeline || [],
+                  aiTriage: row.ai_triage,
+                };
+                this.saveIncidentLocally(updated);
+                callback(updated);
+              } catch (cbErr) {
+                console.warn('Realtime event handler warning:', cbErr);
+              }
+            }
+          )
+          .subscribe();
+      } catch (subErr) {
+        console.warn('Failed to subscribe to Supabase Realtime channel:', subErr);
+      }
     }
 
     // Polling fallback every 6 seconds as mandated
     const pollInterval = setInterval(async () => {
-      const latest = await this.getIncident(id);
-      if (latest) {
-        callback(latest);
+      try {
+        const latest = await this.getIncident(id);
+        if (latest) {
+          callback(latest);
+        }
+      } catch (pollErr) {
+        console.warn('Incident poll warning:', pollErr);
       }
     }, 6000);
 
@@ -531,7 +544,11 @@ export const incidentService = {
       listeners.delete(callback);
       clearInterval(pollInterval);
       if (channel && supabase) {
-        supabase.removeChannel(channel);
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore removal error
+        }
       }
     };
   },

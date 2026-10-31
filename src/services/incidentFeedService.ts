@@ -49,8 +49,8 @@ export const incidentFeedService = {
             },
             createdAt: row.created_at,
             updatedAt: row.updated_at,
-            assignedResponderId: row.assigned_responder?.id,
-            assignedResponderName: row.assigned_responder?.name,
+            assignedResponderId: row.assigned_responder_id || row.assigned_responder?.id,
+            assignedResponderName: row.assigned_responder?.name || (row.assigned_responder_id ? 'Assigned Patrol Unit' : undefined),
             timeline: row.timeline || [],
           }));
         }
@@ -94,12 +94,16 @@ export const incidentFeedService = {
     incidentService.notifyListeners(inc);
 
     if (isSupabaseConfigured() && supabase) {
-      await supabase.from('incidents').update({
-        status: 'ASSIGNED',
-        assigned_responder: inc.assignedResponder,
-        updated_at: now,
-        timeline: inc.timeline,
-      }).eq('id', incidentId);
+      try {
+        await supabase.from('incidents').update({
+          status: 'ASSIGNED',
+          assigned_responder_id: responderId,
+          updated_at: now,
+          timeline: inc.timeline,
+        }).eq('id', incidentId);
+      } catch (err) {
+        console.warn('Failed to update Supabase incident assignment:', err);
+      }
     }
     return true;
   },
@@ -124,6 +128,18 @@ export const incidentFeedService = {
     });
     incidentService.saveIncidentLocally(inc);
     incidentService.notifyListeners(inc);
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase.from('incidents').update({
+          status: 'ON_SCENE',
+          updated_at: now,
+          timeline: inc.timeline,
+        }).eq('id', incidentId);
+      } catch (err) {
+        console.warn('Failed to update Supabase incident on-scene:', err);
+      }
+    }
     return true;
   },
 
@@ -146,6 +162,19 @@ export const incidentFeedService = {
     });
     incidentService.saveIncidentLocally(inc);
     incidentService.notifyListeners(inc);
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase.from('incidents').update({
+          status: 'RESOLVED',
+          resolved_at: now,
+          updated_at: now,
+          timeline: inc.timeline,
+        }).eq('id', incidentId);
+      } catch (err) {
+        console.warn('Failed to update Supabase incident resolution:', err);
+      }
+    }
     return true;
   },
 
@@ -155,24 +184,35 @@ export const incidentFeedService = {
       callback(incidents);
     }, 3000);
 
-    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+    let channel: any = null;
     if (isSupabaseConfigured() && supabase) {
-      channel = supabase
-        .channel('incidents-feed-realtime')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'incidents',
-        }, async () => {
-          const incidents = await this.getAllIncidents();
-          callback(incidents);
-        })
-        .subscribe();
+      try {
+        const chName = `incidents-feed-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        channel = supabase
+          .channel(chName)
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'incidents',
+          }, async () => {
+            const incidents = await this.getAllIncidents();
+            callback(incidents);
+          })
+          .subscribe();
+      } catch (subErr) {
+        console.warn('Feed realtime subscription error:', subErr);
+      }
     }
 
     return () => {
       clearInterval(interval);
-      if (channel && supabase) supabase.removeChannel(channel);
+      if (channel && supabase) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore
+        }
+      }
     };
   },
 };

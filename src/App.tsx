@@ -13,6 +13,7 @@ import { ActiveIncidentPage } from './pages/ActiveIncident/ActiveIncidentPage';
 import { ContactsPage } from './pages/Contacts/ContactsPage';
 import { ProfilePage } from './pages/Profile/ProfilePage';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { ResponderLoginPage } from './pages/Responder/ResponderLoginPage';
 import { ResponderDashboard } from './pages/Responder/ResponderDashboard';
 import { DevAdminDashboard } from './pages/Responder/DevAdminDashboard';
@@ -76,10 +77,10 @@ export const App: React.FC = () => {
                 }
               >
                 <Route index element={<DashboardPage />} />
-                <Route path="sos" element={<SOSActivationPage />} />
-                <Route path="incidents/:id" element={<ActiveIncidentPage />} />
-                <Route path="contacts" element={<ContactsPage />} />
-                <Route path="profile" element={<ProfilePage />} />
+                <Route path="sos" element={<ErrorBoundary fallbackTitle="Emergency SOS Activation"><SOSActivationPage /></ErrorBoundary>} />
+                <Route path="incidents/:id" element={<ErrorBoundary fallbackTitle="Active Incident Telemetry"><ActiveIncidentPage /></ErrorBoundary>} />
+                <Route path="contacts" element={<ErrorBoundary fallbackTitle="Emergency Contacts"><ContactsPage /></ErrorBoundary>} />
+                <Route path="profile" element={<ErrorBoundary fallbackTitle="Safety Profile"><ProfilePage /></ErrorBoundary>} />
               </Route>
 
               {/* Responder / Police Portal — uses own session, not AuthProvider */}
