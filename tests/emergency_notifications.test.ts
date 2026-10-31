@@ -318,4 +318,43 @@ describe('Emergency Notifications & Trusted Contact Alert Suite', () => {
     assert.strictEqual(updatedRecords[0].status, 'ACKNOWLEDGED');
     assert.ok(updatedRecords[0].acknowledgedAt);
   });
+
+  // Scenario 15: Danger Message & Live Location Telemetry Generation
+  test('15. Danger message correctly encodes "I AM IN DANGER", Google Maps coordinates pin, and tracking telemetry', () => {
+    const dangerMsg = notificationService.buildEmergencyDangerMessage({
+      victimName: 'Maya Patel',
+      location: {
+        latitude: 12.9352,
+        longitude: 77.6245,
+        addressText: 'Koramangala 5th Block, Bangalore',
+        accuracyMeters: 8,
+      },
+      incidentId: 'INC-DANGER-999',
+      trackingUrl: 'http://localhost:3000/emergency/INC-DANGER-999?token=xyz',
+    });
+
+    assert.ok(dangerMsg.includes('🚨 EMERGENCY SOS: I AM IN DANGER!'));
+    assert.ok(dangerMsg.includes('Maya Patel'));
+    assert.ok(dangerMsg.includes('https://maps.google.com/?q=12.935200,77.624500'));
+    assert.ok(dangerMsg.includes('Koramangala 5th Block, Bangalore'));
+    assert.ok(dangerMsg.includes('INC-DANGER-999'));
+    assert.ok(dangerMsg.includes('http://localhost:3000/emergency/INC-DANGER-999?token=xyz'));
+  });
+
+  // Scenario 16: SMS Intent URI Generation
+  test('16. SMS intent generators format valid native cellular messaging URIs for single and group contacts', () => {
+    const smsSingle = notificationService.generateSmsIntentUrl(
+      '+91 98765 43210',
+      '🚨 EMERGENCY SOS: I AM IN DANGER!'
+    );
+    assert.ok(smsSingle.startsWith('sms:+919876543210'));
+    assert.ok(smsSingle.includes('EMERGENCY%20SOS%3A%20I%20AM%20IN%20DANGER!'));
+
+    const smsGroup = notificationService.generateGroupSmsIntentUrl(
+      ['+91 98450 11223', '+91 97312 99887'],
+      '🚨 EMERGENCY SOS: I AM IN DANGER!'
+    );
+    assert.ok(smsGroup.startsWith('sms:+919845011223'));
+    assert.ok(smsGroup.includes('EMERGENCY'));
+  });
 });

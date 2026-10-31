@@ -420,6 +420,7 @@ export const ActiveIncidentPage: React.FC = () => {
       <ContactNotificationStatusList
         incidentId={incident.id}
         victimName={user?.fullName || 'Citizen in Distress'}
+        location={incident.location}
       />
 
       {/* WhatsApp Sharing Fallback (User-Initiated) */}

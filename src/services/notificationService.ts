@@ -23,6 +23,39 @@ export function generateSecureEmergencyToken(incidentId: string, contactId: stri
 }
 
 /**
+ * Constructs the standardized emergency distress message with live GPS location.
+ */
+export function buildEmergencyDangerMessage(params: {
+  victimName: string;
+  location?: Incident['location'] | null;
+  incidentId: string;
+  trackingUrl?: string;
+}): string {
+  const { victimName, location, incidentId, trackingUrl } = params;
+  const lat = location?.latitude;
+  const lon = location?.longitude;
+  const hasCoords = typeof lat === 'number' && typeof lon === 'number' && lat !== 0 && lon !== 0;
+
+  const mapsPin = hasCoords
+    ? `https://maps.google.com/?q=${lat!.toFixed(6)},${lon!.toFixed(6)}`
+    : 'https://maps.google.com';
+  const address =
+    location?.addressText ||
+    (hasCoords ? `${lat!.toFixed(4)}, ${lon!.toFixed(4)}` : 'Location pending GPS lock');
+  const accuracy = location?.accuracyMeters ? ` (GPS Accuracy: ±${Math.round(location.accuracyMeters)}m)` : '';
+
+  return (
+    `🚨 EMERGENCY SOS: I AM IN DANGER!\n\n` +
+    `I need immediate help. This is an urgent distress alert sent by ${victimName}.\n\n` +
+    `📍 My Live GPS Location:\n${mapsPin}\n` +
+    `Address: ${address}${accuracy}\n\n` +
+    (trackingUrl ? `🔴 Track My Live Response & Responders:\n${trackingUrl}\n\n` : '') +
+    `Incident ID: #${incidentId}\n` +
+    `Please call emergency police or medical responders immediately!`
+  );
+}
+
+/**
  * Verifies that a secure emergency token belongs to the incident and has not expired.
  */
 export function verifySecureEmergencyToken(
@@ -236,6 +269,12 @@ export const notificationService = {
 
         const secureToken = generateSecureEmergencyToken(incident.id, contact.id);
         const trackingUrl = `${origin}/emergency/${incident.id}?token=${encodeURIComponent(secureToken)}`;
+        const dangerMessage = buildEmergencyDangerMessage({
+          victimName,
+          location: incident.location,
+          incidentId: incident.id,
+          trackingUrl,
+        });
 
         // Determine channel
         const channel: NotificationChannel = contact.notifySms ? 'SMS' : 'PUSH';
@@ -250,6 +289,7 @@ export const notificationService = {
           channel,
           status: 'QUEUED',
           secureToken,
+          messageText: dangerMessage,
           dispatchedAt: timestamp,
         };
 
@@ -272,8 +312,8 @@ export const notificationService = {
                 if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
                   navigator.serviceWorker.controller.postMessage({
                     type: 'TRIGGER_EMERGENCY_NOTIFICATION',
-                    title: 'EMERGENCY SOS ALERT',
-                    body: `${victimName} needs help! Open this alert to view their available location and emergency status.`,
+                    title: '🚨 EMERGENCY: I AM IN DANGER!',
+                    body: `${victimName} is in danger! View their live GPS pin and response telemetry immediately.`,
                     url: trackingUrl,
                     incidentId: incident.id,
                   });
@@ -316,6 +356,31 @@ export const notificationService = {
         }
       })
     );
+
+    // Call backend serverless alert dispatch function asynchronously
+    try {
+      if (typeof fetch === 'function') {
+        fetch('/api/dispatch-alert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            incidentId: incident.id,
+            victimName,
+            contacts: contacts.map((c) => ({ id: c.id, name: c.name, phone: c.phone })),
+            location: incident.location,
+            messageText: buildEmergencyDangerMessage({
+              victimName,
+              location: incident.location,
+              incidentId: incident.id,
+            }),
+          }),
+        }).catch((err) => {
+          console.warn('Backend cellular SMS dispatch worker warning:', err);
+        });
+      }
+    } catch {
+      // non-blocking
+    }
 
     // Save locally
     localStorage.setItem(DISPATCHED_IDEMPOTENCY_KEY, JSON.stringify(idempotencyKeys));
@@ -495,6 +560,65 @@ export const notificationService = {
     }
   },
 
+  buildEmergencyDangerMessage,
+
+  /**
+   * Generates a native cellular SMS intent URI (sms:+919876543210?body=...)
+   * Pre-populates the messaging app with contact and danger alert text for 1-tap transmission.
+   */
+  generateSmsIntentUrl(phone: string, message: string): string {
+    const cleanPhone = phone.replace(/[^\d+]/g, '');
+    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const delimiter = isIOS ? '&body=' : '?body=';
+    return `sms:${cleanPhone}${delimiter}${encodeURIComponent(message)}`;
+  },
+
+  /**
+   * Generates a group cellular SMS intent for multiple contacts simultaneously
+   */
+  generateGroupSmsIntentUrl(phones: string[], message: string): string {
+    const cleanPhones = phones.map((p) => p.replace(/[^\d+]/g, '')).filter(Boolean);
+    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIOS ? ',' : ';';
+    const phoneList = cleanPhones.join(separator);
+    const delimiter = isIOS ? '&body=' : '?body=';
+    return `sms:${phoneList}${delimiter}${encodeURIComponent(message)}`;
+  },
+
+  /**
+   * Generates a direct WhatsApp click-to-chat relay link
+   */
+  generateWhatsAppUrl(phone: string, message: string): string {
+    const cleanPhone = phone.replace(/[^\d]/g, '');
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  },
+
+  /**
+   * Triggers the OS native Web Share sheet (Android / iOS / PWA)
+   * Allows citizen to dispatch the "I am in danger" beacon to WhatsApp, SMS, or any contact.
+   */
+  async shareDistressBeacon(params: {
+    victimName: string;
+    location?: Incident['location'] | null;
+    incidentId: string;
+    trackingUrl?: string;
+  }): Promise<boolean> {
+    const message = buildEmergencyDangerMessage(params);
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: '🚨 EMERGENCY: I AM IN DANGER!',
+          text: message,
+          url: params.trackingUrl,
+        });
+        return true;
+      } catch (err) {
+        console.warn('Native share cancelled or failed:', err);
+      }
+    }
+    return false;
+  },
+
   /**
    * Generates a pre-filled WhatsApp emergency dispatch link
    * (Transparently requires recipient/user interaction to press Send in WhatsApp).
@@ -503,7 +627,8 @@ export const notificationService = {
     contactPhone: string,
     victimName: string,
     incidentId: string,
-    secureToken: string
+    secureToken: string,
+    location?: Incident['location'] | null
   ): string {
     const cleanPhone = contactPhone.replace(/[^\d+]/g, '');
     const origin =
@@ -512,13 +637,13 @@ export const notificationService = {
         : 'http://localhost:3000';
     const link = `${origin}/emergency/${incidentId}?token=${encodeURIComponent(secureToken)}`;
 
-    const text = encodeURIComponent(
-      `🚨 EMERGENCY SOS ALERT — RAKSHA PLATFORM\n\n` +
-      `Your trusted contact *${victimName}* has triggered an Emergency SOS and needs immediate help.\n\n` +
-      `📍 View live GPS location & responder status here:\n${link}\n\n` +
-      `Incident Reference: #${incidentId}`
-    );
+    const text = buildEmergencyDangerMessage({
+      victimName,
+      location,
+      incidentId,
+      trackingUrl: link,
+    });
 
-    return `https://wa.me/${cleanPhone.replace('+', '')}?text=${text}`;
+    return `https://wa.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(text)}`;
   },
 };

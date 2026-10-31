@@ -448,6 +448,7 @@ export const SOSActivationPage: React.FC = () => {
         <ContactNotificationStatusList
           incidentId={incidentId}
           victimName={user?.fullName || 'Citizen in Distress'}
+          location={location}
           className="mb-5"
         />
       )}

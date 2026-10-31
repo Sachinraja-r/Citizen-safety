@@ -108,6 +108,7 @@ export interface ContactNotificationRecord {
   status: NotificationDeliveryStatus;
   secureToken: string;
   errorMessage?: string;
+  messageText?: string;
   dispatchedAt: string;
   deliveredAt?: string;
   acknowledgedAt?: string;
