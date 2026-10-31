@@ -45,13 +45,13 @@ export function buildEmergencyDangerMessage(params: {
   const accuracy = location?.accuracyMeters ? ` (GPS Accuracy: ±${Math.round(location.accuracyMeters)}m)` : '';
 
   return (
-    `EMERGENCY SOS: I AM IN DANGER!\n\n` +
-    `I need immediate help. Distress alert from ${victimName}.\n\n` +
-    `My Live GPS Location:\n${mapsPin}\n` +
+    `🚨 EMERGENCY SOS: I AM IN DANGER!\n\n` +
+    `I need immediate help. This is an urgent distress alert sent by ${victimName}.\n\n` +
+    `📍 My Live GPS Location:\n${mapsPin}\n` +
     `Address: ${address}${accuracy}\n\n` +
-    (trackingUrl ? `Track Live Response: ${trackingUrl}\n\n` : '') +
+    (trackingUrl ? `🔴 Track My Live Response & Responders:\n${trackingUrl}\n\n` : '') +
     `Incident ID: #${incidentId}\n` +
-    `Please call police or emergency responders immediately!`
+    `Please call emergency police or medical responders immediately!`
   );
 }
 
