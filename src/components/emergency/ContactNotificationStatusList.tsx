@@ -21,6 +21,7 @@ import {
   MapPin,
   AlertTriangle,
   ExternalLink,
+  Zap,
 } from 'lucide-react';
 
 interface ContactNotificationStatusListProps {
@@ -41,11 +42,11 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showFullPreview, setShowFullPreview] = useState(false);
-  const hasAutoOpenedSmsRef = useRef(false);
+  const [autoTriggerState, setAutoTriggerState] = useState<'idle' | 'triggered' | 'blocked'>('idle');
 
-  const isMobile =
-    typeof navigator !== 'undefined' &&
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const hasAutoTriggeredBothRef = useRef(false);
+  const smsBtnRef = useRef<HTMLAnchorElement>(null);
+  const whatsAppBtnRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     if (!incidentId) return;
@@ -132,20 +133,70 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   const whatsAppBroadcastUrl = notificationService.generateWhatsAppBroadcastUrl(dangerMessage);
   const hasNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
-  // Auto-launch SMS intent on mobile handset when SOS is triggered (unconditionally declared hook)
+  // Auto-trigger BOTH "Send Cellular SMS to All" and "Send via WhatsApp to All" when SOS button is clicked
   useEffect(() => {
-    if (isMobile && groupSmsUrl && notifications.length > 0 && !hasAutoOpenedSmsRef.current) {
-      hasAutoOpenedSmsRef.current = true;
-      const timer = setTimeout(() => {
-        try {
-          window.location.href = groupSmsUrl;
-        } catch {
-          // ignore
+    if (loading) return;
+    if (hasAutoTriggeredBothRef.current) return;
+    if (!groupSmsUrl && !whatsAppBroadcastUrl) return;
+
+    hasAutoTriggeredBothRef.current = true;
+    setAutoTriggerState('triggered');
+
+    // 1. Immediately trigger "Send via WhatsApp to All" action
+    try {
+      if (whatsAppBtnRef.current) {
+        whatsAppBtnRef.current.click();
+      } else if (whatsAppBroadcastUrl) {
+        const win = window.open(whatsAppBroadcastUrl, '_blank', 'noopener,noreferrer');
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+          setAutoTriggerState('blocked');
         }
-      }, 1200);
-      return () => clearTimeout(timer);
+      }
+    } catch (err) {
+      console.warn('WhatsApp auto-trigger error:', err);
+      setAutoTriggerState('blocked');
     }
-  }, [isMobile, groupSmsUrl, notifications.length]);
+
+    // 2. Trigger "Send Cellular SMS to All" intent (staggered slightly so both intents fire without navigation collision)
+    const smsTimer = setTimeout(() => {
+      try {
+        if (smsBtnRef.current) {
+          smsBtnRef.current.click();
+        } else if (groupSmsUrl) {
+          window.location.href = groupSmsUrl;
+        }
+      } catch (err) {
+        console.warn('Cellular SMS auto-trigger error:', err);
+      }
+    }, 450);
+
+    return () => clearTimeout(smsTimer);
+  }, [loading, groupSmsUrl, whatsAppBroadcastUrl]);
+
+  const handleTriggerBoth = () => {
+    setAutoTriggerState('triggered');
+    try {
+      if (whatsAppBtnRef.current) {
+        whatsAppBtnRef.current.click();
+      } else if (whatsAppBroadcastUrl) {
+        window.open(whatsAppBroadcastUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch {
+      if (whatsAppBroadcastUrl) window.open(whatsAppBroadcastUrl, '_blank');
+    }
+
+    setTimeout(() => {
+      try {
+        if (smsBtnRef.current) {
+          smsBtnRef.current.click();
+        } else if (groupSmsUrl) {
+          window.location.href = groupSmsUrl;
+        }
+      } catch {
+        if (groupSmsUrl) window.location.href = groupSmsUrl;
+      }
+    }, 450);
+  };
 
   const handleCopyMessage = async () => {
     try {
@@ -268,19 +319,38 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
       </div>
 
       {/* Automatic Cloud Dispatch Confirmation */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 flex items-center justify-between text-xs text-emerald-900 shadow-2xs">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-          </span>
-          <span className="font-black text-[11px]">
-            Automated Alert Dispatched to Emergency Contacts
+      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-2 border-emerald-400 rounded-2xl p-3.5 shadow-sm text-emerald-950 flex flex-col gap-1.5 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
+            </span>
+            <span className="font-black text-xs uppercase tracking-wider text-emerald-900 flex items-center gap-1">
+              <Zap className="w-3.5 h-3.5 text-emerald-600" />
+              Automated SOS Trigger Active
+            </span>
+          </div>
+          <span className="text-[10px] uppercase tracking-wider bg-emerald-600 text-white font-extrabold px-2.5 py-0.5 rounded-full shadow-xs">
+            SMS &amp; WhatsApp Fired
           </span>
         </div>
-        <span className="text-[9px] uppercase tracking-wider bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-full font-bold">
-          Sent Automatically
-        </span>
+        <p className="text-[11px] text-emerald-800 font-medium leading-snug">
+          <strong>"Send Cellular SMS to All"</strong> and <strong>"Send via WhatsApp to All"</strong> were automatically triggered with your live GPS coordinates for your trusted emergency contacts.
+        </p>
+        {autoTriggerState === 'blocked' && (
+          <div className="mt-1 pt-1 border-t border-emerald-200 text-[10px] text-amber-800 font-semibold flex items-center justify-between">
+            <span>Browser popup blocked? Tap below:</span>
+            <a
+              href={whatsAppBroadcastUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-700 underline font-bold"
+            >
+              Open WhatsApp Broadcast
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Broadcast Quick Action Buttons (Immediate 1-Tap Trigger for SMS & WhatsApp) */}
@@ -293,16 +363,23 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {/* Send SMS to all */}
           <a
+            ref={smsBtnRef}
+            id="btn-send-sms-all"
             href={groupSmsUrl}
             className="inline-flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-500/25 transition-all active:scale-[0.98] text-center"
             title="Open device messaging app with danger message and contacts pre-filled"
           >
             <Send className="w-4 h-4" />
             <span>Send Cellular SMS to All</span>
+            <span className="text-[9px] bg-red-800/80 text-red-100 px-1.5 py-0.5 rounded-full uppercase font-mono">
+              Auto-Triggered
+            </span>
           </a>
 
           {/* Send WhatsApp to all */}
           <a
+            ref={whatsAppBtnRef}
+            id="btn-send-whatsapp-all"
             href={whatsAppBroadcastUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -311,8 +388,21 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
           >
             <MessageSquare className="w-4 h-4" />
             <span>Send via WhatsApp to All</span>
+            <span className="text-[9px] bg-emerald-800/80 text-emerald-100 px-1.5 py-0.5 rounded-full uppercase font-mono">
+              Auto-Triggered
+            </span>
           </a>
         </div>
+
+        <button
+          type="button"
+          onClick={handleTriggerBoth}
+          className="w-full py-2 px-3 rounded-xl bg-[#FFF5F8] hover:bg-[#FCE4EC] border border-[#F3D9E2] text-[#D81B60] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+          title="Re-trigger both Cellular SMS and WhatsApp broadcast"
+        >
+          <Zap className="w-3.5 h-3.5" />
+          <span>Re-Trigger Both (SMS + WhatsApp to All)</span>
+        </button>
 
         <div className="grid grid-cols-2 gap-2 pt-1">
           {/* Native Web Share */}

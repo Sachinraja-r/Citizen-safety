@@ -380,4 +380,34 @@ describe('Emergency Notifications & Trusted Contact Alert Suite', () => {
     assert.strictEqual(typeof soundRes, 'boolean');
     assert.doesNotThrow(() => stopEmergencyAlertSound());
   });
+
+  // Scenario 18: Dual Auto-Trigger for SMS & WhatsApp Dispatch
+  test('18. Both Cellular SMS and WhatsApp broadcast intents are generated and prepared for dual auto-trigger upon SOS activation', () => {
+    const dangerMsg = notificationService.buildEmergencyDangerMessage({
+      victimName: 'Ananya Sharma',
+      location: {
+        latitude: 12.9716,
+        longitude: 77.5946,
+        addressText: 'MG Road, Bangalore',
+      },
+      incidentId: 'INC-SOS-AUTO-777',
+      trackingUrl: 'https://frontend-nu-nine-47.vercel.app/emergency/INC-SOS-AUTO-777',
+    });
+
+    const phones = ['+91 98450 11223', '+91 97312 99887'];
+
+    // 1. Cellular SMS Intent URI
+    const smsIntentUrl = notificationService.generateGroupSmsIntentUrl(phones, dangerMsg);
+    assert.ok(smsIntentUrl.startsWith('sms:'));
+    assert.ok(smsIntentUrl.includes('+919845011223'));
+    assert.ok(smsIntentUrl.includes('+919731299887'));
+    assert.ok(smsIntentUrl.includes(encodeURIComponent('🚨 EMERGENCY SOS: I AM IN DANGER!')));
+
+    // 2. WhatsApp Broadcast Relay URL
+    const whatsAppBroadcastUrl = notificationService.generateWhatsAppBroadcastUrl(dangerMsg);
+    assert.ok(whatsAppBroadcastUrl.startsWith('https://api.whatsapp.com/send?text='));
+    assert.ok(whatsAppBroadcastUrl.includes(encodeURIComponent('🚨 EMERGENCY SOS: I AM IN DANGER!')));
+    assert.ok(whatsAppBroadcastUrl.includes(encodeURIComponent('https://maps.google.com/?q=12.971600,77.594600')));
+    assert.ok(whatsAppBroadcastUrl.includes(encodeURIComponent('https://frontend-nu-nine-47.vercel.app/emergency/INC-SOS-AUTO-777')));
+  });
 });
