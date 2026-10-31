@@ -360,7 +360,12 @@ export const notificationService = {
     // Call backend serverless alert dispatch function asynchronously
     try {
       if (typeof fetch === 'function') {
-        fetch('/api/dispatch-alert', {
+        const dispatchEndpoint =
+          typeof window !== 'undefined' && window.location?.origin
+            ? `${window.location.origin}/api/dispatch-alert`
+            : 'http://localhost:3000/api/dispatch-alert';
+
+        fetch(dispatchEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

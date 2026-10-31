@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { contactService } from '../../services/contactService';
 import { ContactNotificationRecord, LocationData } from '../../types';
 import {
   notificationService,
@@ -33,6 +35,7 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   location,
   className = '',
 }) => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<ContactNotificationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -41,18 +44,68 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   useEffect(() => {
     if (!incidentId) return;
 
+    let isMounted = true;
+
+    const loadOrDispatch = async () => {
+      try {
+        const records = await notificationService.getIncidentNotifications(incidentId);
+        if (!isMounted) return;
+
+        if (records && records.length > 0) {
+          setNotifications(records);
+          setLoading(false);
+        } else {
+          // If no notifications exist yet for this incident ID, load user's trusted contacts and dispatch
+          const contacts = await contactService.getContacts(user?.id);
+          if (!isMounted) return;
+
+          if (contacts && contacts.length > 0) {
+            const fresh = await notificationService.dispatchEmergencyAlertToContacts({
+              incident: {
+                id: incidentId,
+                userId: user?.id || 'demo-user-101',
+                type: 'SOS_EMERGENCY',
+                severity: 'CRITICAL',
+                status: 'OPEN',
+                location: location || { latitude: 12.8406, longitude: 77.6632 },
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                timeline: [],
+              },
+              victimName,
+              contacts,
+            });
+            if (isMounted) {
+              setNotifications(fresh);
+              setLoading(false);
+            }
+          } else {
+            setLoading(false);
+          }
+        }
+      } catch (err) {
+        console.warn('Error syncing notifications for incident:', err);
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadOrDispatch();
+
     const unsubscribe = notificationService.subscribeToIncidentNotifications(
       incidentId,
       (records) => {
-        setNotifications(records);
-        setLoading(false);
+        if (isMounted) {
+          setNotifications(records);
+          setLoading(false);
+        }
       }
     );
 
     return () => {
+      isMounted = false;
       unsubscribe();
     };
-  }, [incidentId]);
+  }, [incidentId, user?.id, victimName, location]);
 
   const origin =
     typeof window !== 'undefined' && window.location?.origin
