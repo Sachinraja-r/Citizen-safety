@@ -7,12 +7,7 @@ import { RakshaLogo } from '../../components/common/RakshaLogo';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, loginDemo } = useAuth();
-
-  const handleDemoAccess = () => {
-    loginDemo();
-    navigate('/app');
-  };
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FFF5F8] via-white to-[#FFF5F8] text-[#2D1B24] flex flex-col justify-between selection:bg-[#E91E63] selection:text-white">
@@ -61,24 +56,15 @@ export const LandingPage: React.FC = () => {
         </p>
 
         {/* Action CTAs */}
-        <div className="flex flex-col sm:flex-row items-center gap-3.5 w-full max-w-md mx-auto mb-12">
+        <div className="flex justify-center w-full max-w-xs mx-auto mb-12">
           <Button
             size="lg"
             variant="danger"
-            className="w-full sm:flex-1 text-base font-bold shadow-xl shadow-red-500/30"
+            className="w-full text-base font-bold shadow-xl shadow-red-500/30"
             onClick={() => navigate('/login')}
             leftIcon={<Zap className="w-5 h-5 text-amber-200" />}
           >
             Get Protected Now
-          </Button>
-
-          <Button
-            size="lg"
-            variant="secondary"
-            className="w-full sm:flex-1 text-sm font-semibold border-[#F3D9E2] shadow-sm"
-            onClick={handleDemoAccess}
-          >
-            Try Reviewer Demo Mode
           </Button>
         </div>
 

@@ -5,12 +5,12 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { AlertBanner } from '../../components/common/AlertBanner';
 import { authService } from '../../services/authService';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { RakshaLogo } from '../../components/common/RakshaLogo';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { loginWithGoogle, loginDemo, error: authError } = useAuth();
+  const { loginWithGoogle, error: authError } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,11 +51,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleDemoLogin = () => {
-    loginDemo();
-    navigate('/app');
-  };
-
   return (
     <div className="min-h-screen bg-[#FFF5F8] text-[#2D1B24] flex flex-col justify-center px-4 py-8">
       <div className="w-full max-w-sm mx-auto text-center">
@@ -79,8 +74,8 @@ export const LoginPage: React.FC = () => {
         {!isSupabaseReady && (
           <AlertBanner
             type="info"
-            title="Development / Demo Mode Active"
-            message="Supabase credentials are not populated in .env. You can log in instantly with the pre-seeded Demo Citizen profile below."
+            title="Supabase Not Connected"
+            message="Supabase credentials are not populated in environment variables. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable live authentication."
             className="mb-5"
           />
         )}
@@ -93,37 +88,6 @@ export const LoginPage: React.FC = () => {
             className="mb-5"
           />
         )}
-
-        {/* 1. Reviewer / Demo Quick Access Button with Pink Hoysala Accents */}
-        <div className="mb-5 p-4 rounded-2xl bg-white border border-[#F3D9E2] text-left shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#D81B60] flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-[#E91E63]" /> Instant Reviewer Access
-            </span>
-            <span className="text-[10px] text-[#7A6570] font-medium">Zero Setup Required</span>
-          </div>
-          <p className="text-xs text-[#7A6570] mb-3">
-            Load demo account with simulated location, contacts &amp; response dispatch:
-          </p>
-          <Button
-            type="button"
-            variant="primary"
-            size="md"
-            className="w-full font-bold shadow-md shadow-[#E91E63]/25"
-            onClick={handleDemoLogin}
-          >
-            Sign In as Demo Citizen (Priya Sharma)
-          </Button>
-        </div>
-
-        <div className="relative my-6 text-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[#F3D9E2]" />
-          </div>
-          <span className="relative bg-[#FFF5F8] px-3 text-[11px] uppercase tracking-wider text-[#7A6570] font-semibold">
-            Or Sign In with Supabase
-          </span>
-        </div>
 
         {/* Google OAuth Button */}
         <Button
