@@ -19,7 +19,6 @@ import {
   HelpCircle,
   SkipForward,
   Mic,
-  ChevronRight,
   WifiOff,
   AlertTriangle,
   RefreshCw,
@@ -175,15 +174,6 @@ export const SOSActivationPage: React.FC = () => {
     setIsSubmittingDetails(false);
     setDetailsSent(true);
   }, [incidentId, selectedCategory, description, updateIncidentDetails]);
-
-  // Navigate to live tracking map
-  const handleGoToTracking = useCallback(() => {
-    if (incidentId) {
-      navigate(`/app/incidents/${incidentId}`);
-    } else {
-      navigate('/app');
-    }
-  }, [incidentId, navigate]);
 
   // Retry SOS dispatch if it failed
   const handleRetry = useCallback(async () => {
@@ -432,15 +422,6 @@ export const SOSActivationPage: React.FC = () => {
             </span>
           </div>
         </div>
-
-        {/* Primary Action Button: Live Tracking — BOLD RED */}
-        <button
-          onClick={handleGoToTracking}
-          className="w-full py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xl shadow-red-500/40 transition-colors"
-        >
-          Track Live Response &amp; Responders
-          <ChevronRight className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Trusted Contact Notification Dispatch Breakdown */}
@@ -521,11 +502,11 @@ export const SOSActivationPage: React.FC = () => {
           <div className="flex gap-2.5">
             <button
               type="button"
-              onClick={handleGoToTracking}
+              onClick={() => navigate('/app')}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[#F3D9E2] bg-white text-[#7A6570] text-xs font-semibold hover:bg-[#FFF5F8] transition-colors shadow-sm"
             >
               <SkipForward className="w-3.5 h-3.5 text-[#7A6570]" />
-              Skip for Now
+              Return to Dashboard
             </button>
             <button
               type="button"
@@ -546,11 +527,10 @@ export const SOSActivationPage: React.FC = () => {
             Your notes and category have been updated in the live dispatch queue.
           </p>
           <button
-            onClick={handleGoToTracking}
-            className="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-500/30"
+            onClick={() => navigate('/app')}
+            className="w-full py-3 rounded-2xl bg-[#E91E63] hover:bg-[#D81B60] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#E91E63]/30"
           >
-            Open Live Map &amp; Tracking
-            <ChevronRight className="w-4 h-4" />
+            Return to Safety Dashboard
           </button>
         </div>
       )}
