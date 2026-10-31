@@ -306,6 +306,16 @@ export const notificationService = {
             record.status = contact.notifySms ? 'SMS_SENT' : 'PUSH_SENT';
             record.deliveredAt = new Date().toISOString();
 
+            // Trigger native Android background SMS if running inside Android Studio native wrapper
+            if (typeof window !== 'undefined' && (window as any).AndroidBridge?.sendEmergencySms) {
+              try {
+                (window as any).AndroidBridge.sendEmergencySms(contact.phone, dangerMessage);
+                console.log(`[ANDROID NATIVE BRIDGE] Sent background cellular SMS to ${contact.phone}`);
+              } catch (bridgeErr) {
+                console.warn('Android native bridge SMS error:', bridgeErr);
+              }
+            }
+
             // Also try to trigger local Service Worker push notification if running on recipient's test handset
             if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
               try {

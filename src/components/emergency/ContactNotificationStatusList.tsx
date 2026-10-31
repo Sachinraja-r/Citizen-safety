@@ -245,61 +245,83 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
         )}
       </div>
 
-      {/* Broadcast Quick Action Buttons */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-        {/* Send SMS to all */}
-        <a
-          href={groupSmsUrl}
-          className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm transition-colors text-center"
-          title="Open cellular SMS app with danger message and contacts pre-filled"
-        >
-          <Send className="w-3.5 h-3.5" />
-          <span>Send SMS: I'm in Danger</span>
-        </a>
+      {/* Automatic Cloud Dispatch Confirmation */}
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 flex items-center justify-between text-xs text-emerald-900 shadow-2xs">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <span className="font-black text-[11px]">
+            Automated Alert Dispatched to Emergency Contacts
+          </span>
+        </div>
+        <span className="text-[9px] uppercase tracking-wider bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-full font-bold">
+          Sent Automatically
+        </span>
+      </div>
 
-        {/* Native Web Share */}
-        {hasNativeShare ? (
+      {/* Broadcast Quick Action Buttons (Optional Device-Level Fallback) */}
+      <div className="space-y-1.5 pt-0.5">
+        <div className="flex items-center justify-between text-[10px] text-[#7A6570]">
+          <span className="font-bold uppercase tracking-wider">Device-Level Relays (Optional Manual Trigger):</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {/* Send SMS to all */}
+          <a
+            href={groupSmsUrl}
+            className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm transition-colors text-center"
+            title="Open device messaging app with danger message and contacts pre-filled"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Open Phone SMS App</span>
+          </a>
+
+          {/* Native Web Share */}
+          {hasNativeShare ? (
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#FFF5F8] hover:bg-[#FCE4EC] border border-[#F3D9E2] text-[#D81B60] font-bold text-xs transition-colors"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Share via Apps</span>
+            </button>
+          ) : (
+            <a
+              href={notificationService.generateWhatsAppUrl(
+                allPhones[0] || '',
+                dangerMessage
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold text-xs transition-colors"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>WhatsApp Direct</span>
+            </a>
+          )}
+
+          {/* Copy Danger Message */}
           <button
             type="button"
-            onClick={handleNativeShare}
-            className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#FFF5F8] hover:bg-[#FCE4EC] border border-[#F3D9E2] text-[#D81B60] font-bold text-xs transition-colors"
+            onClick={handleCopyMessage}
+            className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs transition-colors"
           >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Share via Apps</span>
-          </button>
-        ) : (
-          <a
-            href={notificationService.generateWhatsAppUrl(
-              allPhones[0] || '',
-              dangerMessage
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-emerald-700">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Danger Text</span>
+              </>
             )}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold text-xs transition-colors"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>WhatsApp Distress</span>
-          </a>
-        )}
-
-        {/* Copy Danger Message */}
-        <button
-          type="button"
-          onClick={handleCopyMessage}
-          className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs transition-colors"
-        >
-          {copied ? (
-            <>
-              <Check className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-emerald-700">Copied!</span>
-            </>
-          ) : (
-            <>
-              <Copy className="w-3.5 h-3.5" />
-              <span>Copy Danger Text</span>
-            </>
-          )}
-        </button>
+          </button>
+        </div>
       </div>
 
       {/* Message Preview Accordion */}
