@@ -381,33 +381,69 @@ describe('Emergency Notifications & Trusted Contact Alert Suite', () => {
     assert.doesNotThrow(() => stopEmergencyAlertSound());
   });
 
-  // Scenario 18: Dual Auto-Trigger for SMS & WhatsApp Dispatch
-  test('18. Both Cellular SMS and WhatsApp broadcast intents are generated and prepared for dual auto-trigger upon SOS activation', () => {
-    const dangerMsg = notificationService.buildEmergencyDangerMessage({
-      victimName: 'Ananya Sharma',
+  // Scenario 18: Automated Cellular SMS Dispatch (Sent Directly, Not Draft)
+  test('18. Cellular SMS with live GPS location is dispatched automatically and marked SENT (not draft) upon SOS activation', async () => {
+    const incident: Incident = {
+      id: 'INC-SOS-AUTO-888',
+      userId: 'victim-003',
+      type: 'SOS_EMERGENCY',
+      severity: 'CRITICAL',
+      status: 'OPEN',
       location: {
         latitude: 12.9716,
         longitude: 77.5946,
         addressText: 'MG Road, Bangalore',
+        accuracyMeters: 5,
       },
-      incidentId: 'INC-SOS-AUTO-777',
-      trackingUrl: 'https://frontend-nu-nine-47.vercel.app/emergency/INC-SOS-AUTO-777',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      timeline: [],
+    };
+
+    const contacts: TrustedContact[] = [
+      {
+        id: 'c-10',
+        name: 'Rajesh Sharma',
+        phone: '+91 98450 11223',
+        relationship: 'Brother',
+        priority: 1,
+        notifySms: true,
+      },
+      {
+        id: 'c-11',
+        name: 'Ananya Verma',
+        phone: '+91 97312 99887',
+        relationship: 'Roommate',
+        priority: 2,
+        notifySms: true,
+      },
+    ];
+
+    const records = await notificationService.dispatchEmergencyAlertToContacts({
+      incident,
+      victimName: 'Priya Sharma',
+      contacts,
     });
 
-    const phones = ['+91 98450 11223', '+91 97312 99887'];
+    assert.strictEqual(records.length, 2);
 
-    // 1. Cellular SMS Intent URI
-    const smsIntentUrl = notificationService.generateGroupSmsIntentUrl(phones, dangerMsg);
-    assert.ok(smsIntentUrl.startsWith('sms:'));
-    assert.ok(smsIntentUrl.includes('+919845011223'));
-    assert.ok(smsIntentUrl.includes('+919731299887'));
-    assert.ok(smsIntentUrl.includes(encodeURIComponent('🚨 EMERGENCY SOS: I AM IN DANGER!')));
+    // Verify SMS status is SENT and channel is SMS (not draft)
+    for (const record of records) {
+      assert.strictEqual(record.channel, 'SMS');
+      assert.strictEqual(record.status, 'SMS_SENT');
+      assert.ok(record.deliveredAt, 'SMS record must have deliveredAt timestamp');
+      assert.ok(record.messageText.includes('🚨 EMERGENCY SOS: I AM IN DANGER!'));
+      assert.ok(record.messageText.includes('https://maps.google.com/?q=12.971600,77.594600'));
+      assert.ok(record.messageText.includes('MG Road, Bangalore'));
+    }
 
-    // 2. WhatsApp Broadcast Relay URL
-    const whatsAppBroadcastUrl = notificationService.generateWhatsAppBroadcastUrl(dangerMsg);
-    assert.ok(whatsAppBroadcastUrl.startsWith('https://api.whatsapp.com/send?text='));
-    assert.ok(whatsAppBroadcastUrl.includes(encodeURIComponent('🚨 EMERGENCY SOS: I AM IN DANGER!')));
-    assert.ok(whatsAppBroadcastUrl.includes(encodeURIComponent('https://maps.google.com/?q=12.971600,77.594600')));
-    assert.ok(whatsAppBroadcastUrl.includes(encodeURIComponent('https://frontend-nu-nine-47.vercel.app/emergency/INC-SOS-AUTO-777')));
+    // Verify manual fallback SMS group intent URL is correctly formed
+    const fallbackUrl = notificationService.generateGroupSmsIntentUrl(
+      contacts.map((c) => c.phone),
+      records[0].messageText
+    );
+    assert.ok(fallbackUrl.startsWith('sms:'));
+    assert.ok(fallbackUrl.includes('+919845011223'));
+    assert.ok(fallbackUrl.includes('+919731299887'));
   });
 });

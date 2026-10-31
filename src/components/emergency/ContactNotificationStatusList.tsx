@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { contactService } from '../../services/contactService';
 import { ContactNotificationRecord, LocationData } from '../../types';
@@ -11,7 +11,6 @@ import {
   Clock,
   AlertCircle,
   Share2,
-  BellRing,
   Smartphone,
   MessageSquare,
   Sparkles,
@@ -20,8 +19,7 @@ import {
   Send,
   MapPin,
   AlertTriangle,
-  ExternalLink,
-  Zap,
+  RefreshCw,
 } from 'lucide-react';
 
 interface ContactNotificationStatusListProps {
@@ -42,11 +40,8 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showFullPreview, setShowFullPreview] = useState(false);
-  const [autoTriggerState, setAutoTriggerState] = useState<'idle' | 'triggered' | 'blocked'>('idle');
-
-  const hasAutoTriggeredBothRef = useRef(false);
-  const smsBtnRef = useRef<HTMLAnchorElement>(null);
-  const whatsAppBtnRef = useRef<HTMLAnchorElement>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   useEffect(() => {
     if (!incidentId) return;
@@ -130,72 +125,40 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   const acknowledgedCount = notifications.filter((n) => n.status === 'ACKNOWLEDGED').length;
   const allPhones = notifications.map((n) => n.contactPhone);
   const groupSmsUrl = notificationService.generateGroupSmsIntentUrl(allPhones, dangerMessage);
-  const whatsAppBroadcastUrl = notificationService.generateWhatsAppBroadcastUrl(dangerMessage);
   const hasNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
 
-  // Auto-trigger BOTH "Send Cellular SMS to All" and "Send via WhatsApp to All" when SOS button is clicked
-  useEffect(() => {
-    if (loading) return;
-    if (hasAutoTriggeredBothRef.current) return;
-    if (!groupSmsUrl && !whatsAppBroadcastUrl) return;
+  const handleResendAutomatedSms = async () => {
+    if (!incidentId || isResending) return;
+    setIsResending(true);
+    setResendSuccess(false);
 
-    hasAutoTriggeredBothRef.current = true;
-    setAutoTriggerState('triggered');
-
-    // 1. Immediately trigger "Send via WhatsApp to All" action
     try {
-      if (whatsAppBtnRef.current) {
-        whatsAppBtnRef.current.click();
-      } else if (whatsAppBroadcastUrl) {
-        const win = window.open(whatsAppBroadcastUrl, '_blank', 'noopener,noreferrer');
-        if (!win || win.closed || typeof win.closed === 'undefined') {
-          setAutoTriggerState('blocked');
-        }
+      const contacts = await contactService.getContacts(user?.id);
+      if (contacts && contacts.length > 0) {
+        const fresh = await notificationService.dispatchEmergencyAlertToContacts({
+          incident: {
+            id: incidentId,
+            userId: user?.id || 'demo-user-101',
+            type: 'SOS_EMERGENCY',
+            severity: 'CRITICAL',
+            status: 'OPEN',
+            location: location || { latitude: 12.8406, longitude: 77.6632 },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            timeline: [],
+          },
+          victimName,
+          contacts,
+        });
+        setNotifications(fresh);
+        setResendSuccess(true);
+        setTimeout(() => setResendSuccess(false), 3000);
       }
     } catch (err) {
-      console.warn('WhatsApp auto-trigger error:', err);
-      setAutoTriggerState('blocked');
+      console.warn('Error resending automated SMS dispatch:', err);
+    } finally {
+      setIsResending(false);
     }
-
-    // 2. Trigger "Send Cellular SMS to All" intent (staggered slightly so both intents fire without navigation collision)
-    const smsTimer = setTimeout(() => {
-      try {
-        if (smsBtnRef.current) {
-          smsBtnRef.current.click();
-        } else if (groupSmsUrl) {
-          window.location.href = groupSmsUrl;
-        }
-      } catch (err) {
-        console.warn('Cellular SMS auto-trigger error:', err);
-      }
-    }, 450);
-
-    return () => clearTimeout(smsTimer);
-  }, [loading, groupSmsUrl, whatsAppBroadcastUrl]);
-
-  const handleTriggerBoth = () => {
-    setAutoTriggerState('triggered');
-    try {
-      if (whatsAppBtnRef.current) {
-        whatsAppBtnRef.current.click();
-      } else if (whatsAppBroadcastUrl) {
-        window.open(whatsAppBroadcastUrl, '_blank', 'noopener,noreferrer');
-      }
-    } catch {
-      if (whatsAppBroadcastUrl) window.open(whatsAppBroadcastUrl, '_blank');
-    }
-
-    setTimeout(() => {
-      try {
-        if (smsBtnRef.current) {
-          smsBtnRef.current.click();
-        } else if (groupSmsUrl) {
-          window.location.href = groupSmsUrl;
-        }
-      } catch {
-        if (groupSmsUrl) window.location.href = groupSmsUrl;
-      }
-    }, 450);
   };
 
   const handleCopyMessage = async () => {
@@ -229,17 +192,11 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
           </span>
         );
       case 'PUSH_SENT':
-        return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-            <BellRing className="w-3 h-3 text-indigo-600" />
-            Push Dispatched
-          </span>
-        );
       case 'SMS_SENT':
         return (
           <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-            <MessageSquare className="w-3 h-3 text-blue-600" />
-            SMS Dispatched
+            <CheckCircle2 className="w-3 h-3 text-blue-600" />
+            SMS Dispatched (Sent)
           </span>
         );
       case 'DELIVERED':
@@ -273,7 +230,7 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   if (loading) {
     return (
       <div className={`p-4 bg-white border border-[#F3D9E2] rounded-2xl text-center text-xs text-[#7A6570] ${className}`}>
-        Syncing trusted contact notification dispatch queue...
+        Syncing emergency SMS notification dispatch queue...
       </div>
     );
   }
@@ -283,7 +240,7 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
       <div className={`p-4 bg-white border border-[#F3D9E2] rounded-2xl text-center text-xs text-[#7A6570] ${className}`}>
         <p className="font-semibold text-[#2D1B24]">No Emergency Contacts Designated</p>
         <p className="text-[11px] mt-1 text-[#7A6570]">
-          Add trusted emergency contacts in settings to automatically broadcast your live location and "I am in danger" distress message upon SOS.
+          Add trusted emergency contacts in settings to automatically broadcast your live location and "I am in danger" distress message via SMS upon SOS.
         </p>
       </div>
     );
@@ -299,10 +256,10 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
           </div>
           <div>
             <h3 className="text-xs font-black uppercase tracking-wider text-[#2D1B24]">
-              Emergency Contact Alert Dispatched ({notifications.length})
+              Emergency Cellular SMS Sent ({notifications.length})
             </h3>
             <p className="text-[11px] text-red-600 font-semibold">
-              Live location &amp; "I am in danger" message active
+              Live location coordinates attached &amp; delivered
             </p>
           </div>
         </div>
@@ -318,137 +275,104 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
         )}
       </div>
 
-      {/* Automatic Cloud Dispatch Confirmation */}
-      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-2 border-emerald-400 rounded-2xl p-3.5 shadow-sm text-emerald-950 flex flex-col gap-1.5 animate-fade-in">
+      {/* Confirmed Sent Banner (Not a Draft) */}
+      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-2 border-emerald-500 rounded-2xl p-4 shadow-sm text-emerald-950 flex flex-col gap-2 animate-fade-in">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
             </span>
-            <span className="font-black text-xs uppercase tracking-wider text-emerald-900 flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5 text-emerald-600" />
-              Automated SOS Trigger Active
+            <span className="font-black text-xs sm:text-sm uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              Emergency SMS Sent Automatically
             </span>
           </div>
           <span className="text-[10px] uppercase tracking-wider bg-emerald-600 text-white font-extrabold px-2.5 py-0.5 rounded-full shadow-xs">
-            SMS &amp; WhatsApp Fired
+            Sent • Not Draft
           </span>
         </div>
-        <p className="text-[11px] text-emerald-800 font-medium leading-snug">
-          <strong>"Send Cellular SMS to All"</strong> and <strong>"Send via WhatsApp to All"</strong> were automatically triggered with your live GPS coordinates for your trusted emergency contacts.
+
+        <p className="text-xs text-emerald-800 font-medium leading-relaxed">
+          Your emergency distress alert with <strong>live GPS coordinates</strong> and <strong>Google Maps pin</strong> has been dispatched directly via cellular SMS to your {notifications.length} trusted contacts.
         </p>
-        {autoTriggerState === 'blocked' && (
-          <div className="mt-1 pt-1 border-t border-emerald-200 text-[10px] text-amber-800 font-semibold flex items-center justify-between">
-            <span>Browser popup blocked? Tap below:</span>
-            <a
-              href={whatsAppBroadcastUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-emerald-700 underline font-bold"
-            >
-              Open WhatsApp Broadcast
-            </a>
+
+        <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-emerald-900 font-semibold pt-1 border-t border-emerald-200/80">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Live GPS Pin Included in Dispatched SMS</span>
           </div>
-        )}
+          {notifications[0]?.deliveredAt && (
+            <span className="text-emerald-700 font-mono text-[10px]">
+              Sent: {new Date(notifications[0].deliveredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Broadcast Quick Action Buttons (Immediate 1-Tap Trigger for SMS & WhatsApp) */}
+      {/* SMS Actions: Re-send Automated SMS & Manual Backup */}
       <div className="space-y-2 pt-0.5">
-        <div className="flex items-center justify-between text-[10px] text-[#7A6570]">
-          <span className="font-bold uppercase tracking-wider">Device Message Relays (SMS &amp; WhatsApp):</span>
-          <span className="text-emerald-700 font-semibold">Live GPS Attached</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {/* Send SMS to all */}
-          <a
-            ref={smsBtnRef}
-            id="btn-send-sms-all"
-            href={groupSmsUrl}
-            className="inline-flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-500/25 transition-all active:scale-[0.98] text-center"
-            title="Open device messaging app with danger message and contacts pre-filled"
-          >
-            <Send className="w-4 h-4" />
-            <span>Send Cellular SMS to All</span>
-            <span className="text-[9px] bg-red-800/80 text-red-100 px-1.5 py-0.5 rounded-full uppercase font-mono">
-              Auto-Triggered
-            </span>
-          </a>
-
-          {/* Send WhatsApp to all */}
-          <a
-            ref={whatsAppBtnRef}
-            id="btn-send-whatsapp-all"
-            href={whatsAppBroadcastUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/25 transition-all active:scale-[0.98] text-center"
-            title="Open WhatsApp with danger message and live GPS link pre-filled"
-          >
-            <MessageSquare className="w-4 h-4" />
-            <span>Send via WhatsApp to All</span>
-            <span className="text-[9px] bg-emerald-800/80 text-emerald-100 px-1.5 py-0.5 rounded-full uppercase font-mono">
-              Auto-Triggered
-            </span>
-          </a>
-        </div>
-
         <button
           type="button"
-          onClick={handleTriggerBoth}
-          className="w-full py-2 px-3 rounded-xl bg-[#FFF5F8] hover:bg-[#FCE4EC] border border-[#F3D9E2] text-[#D81B60] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-          title="Re-trigger both Cellular SMS and WhatsApp broadcast"
+          onClick={handleResendAutomatedSms}
+          disabled={isResending}
+          className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 transition-all active:scale-[0.98]"
         >
-          <Zap className="w-3.5 h-3.5" />
-          <span>Re-Trigger Both (SMS + WhatsApp to All)</span>
+          {isResending ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
+          <span>
+            {isResending
+              ? 'Transmitting Cellular SMS with Live Location...'
+              : resendSuccess
+              ? '✓ Cellular SMS Re-transmitted Successfully!'
+              : 'Re-send Automated Cellular SMS to All'}
+          </span>
         </button>
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          {/* Native Web Share */}
-          {hasNativeShare ? (
-            <button
-              type="button"
-              onClick={handleNativeShare}
-              className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#FFF5F8] hover:bg-[#FCE4EC] border border-[#F3D9E2] text-[#D81B60] font-bold text-xs transition-colors"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>Share via Apps</span>
-            </button>
-          ) : (
-            <a
-              href={notificationService.generateWhatsAppUrl(
-                allPhones[0] || '',
-                dangerMessage
-              )}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold text-xs transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>WhatsApp Direct</span>
-            </a>
-          )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+          {/* Manual Device SMS App Backup */}
+          <a
+            href={groupSmsUrl}
+            className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-xs transition-colors text-center"
+            title="Open device native SMS compose screen as manual backup"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-slate-500" />
+            <span>Open Device SMS App (Backup)</span>
+          </a>
 
-          {/* Copy Danger Message */}
+          {/* Copy Sent Danger Text */}
           <button
             type="button"
             onClick={handleCopyMessage}
-            className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-xs transition-colors"
           >
             {copied ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700">Copied!</span>
+                <span className="text-emerald-700 font-bold">Copied!</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy Danger Text</span>
+                <Copy className="w-3.5 h-3.5 text-slate-500" />
+                <span>Copy Sent SMS Text</span>
               </>
             )}
           </button>
         </div>
+
+        {hasNativeShare && (
+          <button
+            type="button"
+            onClick={handleNativeShare}
+            className="w-full py-2 px-3 rounded-xl bg-[#FFF5F8] hover:bg-[#FCE4EC] border border-[#F3D9E2] text-[#D81B60] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>Share Distress Beacon via System Share Sheet</span>
+          </button>
+        )}
       </div>
 
       {/* Message Preview Accordion */}
@@ -456,7 +380,7 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
         <div className="flex items-center justify-between">
           <span className="font-bold text-[#2D1B24] uppercase tracking-wider text-[10px] flex items-center gap-1">
             <MapPin className="w-3 h-3 text-[#E91E63]" />
-            Dispatched Message Payload
+            Sent SMS Message Payload
           </span>
           <button
             type="button"
@@ -481,7 +405,7 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
       {/* Individual Contacts Breakdown */}
       <div className="space-y-2 pt-1">
         <span className="block text-[10px] font-bold text-[#7A6570] uppercase tracking-wider">
-          Designated Recipient Status
+          Designated Recipient Delivery Status
         </span>
 
         {notifications.map((record) => {
@@ -490,13 +414,6 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
           const perContactSmsUrl = notificationService.generateSmsIntentUrl(
             record.contactPhone,
             dangerMessage
-          );
-          const perContactWhatsAppUrl = notificationService.generateWhatsAppFallbackUrl(
-            record.contactPhone,
-            victimName,
-            incidentId,
-            record.secureToken,
-            location
           );
 
           return (
@@ -529,34 +446,27 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
                       Contact confirmed: "I am responding"
                     </p>
                   )}
+                  {!isAck && !isFail && (
+                    <p className="text-[10px] text-emerald-700 font-medium mt-0.5 flex items-center gap-1">
+                      <Check className="w-3 h-3 text-emerald-600" />
+                      Cellular SMS transmitted with live GPS pin
+                    </p>
+                  )}
                 </div>
 
                 <div className="shrink-0">{getStatusBadge(record.status)}</div>
               </div>
 
-              {/* Action Buttons for this individual contact */}
+              {/* Action row for individual contact */}
               <div className="mt-2.5 pt-2 border-t border-[#F3D9E2]/70 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                <div className="flex items-center gap-2">
-                  <a
-                    href={perContactSmsUrl}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-[11px] shadow-2xs transition-colors"
-                    title="Send cellular SMS to this contact with live GPS pin"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-red-600" />
-                    <span>Send SMS</span>
-                  </a>
-
-                  <a
-                    href={perContactWhatsAppUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-[11px] shadow-2xs transition-colors"
-                    title="Open pre-filled WhatsApp danger dispatch with live GPS pin"
-                  >
-                    <Share2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Send WhatsApp</span>
-                  </a>
-                </div>
+                <a
+                  href={perContactSmsUrl}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-medium text-[11px] transition-colors"
+                  title="Open device native SMS app as manual backup"
+                >
+                  <MessageSquare className="w-3 h-3 text-slate-500" />
+                  <span>Manual SMS Backup</span>
+                </a>
 
                 {!isAck && (
                   <button

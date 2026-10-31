@@ -19,7 +19,6 @@ import {
   Sparkles,
   AlertOctagon,
   PhoneCall,
-  Share2,
   Edit3,
   Check,
   X,
@@ -104,17 +103,6 @@ export const ActiveIncidentPage: React.FC = () => {
     );
     setIsSavingDetails(false);
     setIsEditing(false);
-  };
-
-  const handleWhatsAppShare = () => {
-    if (!incident) return;
-    const lat = incident.location?.latitude ?? 12.8406;
-    const lon = incident.location?.longitude ?? 77.6632;
-    const locText = incident.location?.addressText || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-    const msg = encodeURIComponent(
-      `🚨 EMERGENCY SOS ALERT!\nI need immediate assistance.\nIncident ID: #${incident.id}\nCategory: ${formatIncidentType(incident.type)}\nLocation: ${locText}\nLive GPS Pin: https://maps.google.com/?q=${lat},${lon}\n(Sent from Raksha Emergency Platform)`
-    );
-    window.open(`https://wa.me/?text=${msg}`, '_blank');
   };
 
   const handleResolve = async () => {
@@ -422,26 +410,6 @@ export const ActiveIncidentPage: React.FC = () => {
         victimName={user?.fullName || 'Citizen in Distress'}
         location={incident.location}
       />
-
-      {/* WhatsApp Sharing Fallback (User-Initiated) */}
-      <div className="p-3.5 bg-white border border-[#F3D9E2] shadow-sm rounded-2xl text-left space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-[#2D1B24]">
-            Emergency WhatsApp Share
-          </span>
-          <button
-            type="button"
-            onClick={handleWhatsAppShare}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition-colors"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            Share via WhatsApp
-          </button>
-        </div>
-        <p className="text-[10px] text-[#7A6570] leading-tight">
-          User-initiated: Opens WhatsApp with pre-filled GPS coordinates. You must tap &quot;Send&quot; in WhatsApp to deliver the message.
-        </p>
-      </div>
 
       {/* Incident Event Timeline */}
       <IncidentTimeline currentStatus={incident.status} events={incident.timeline} />

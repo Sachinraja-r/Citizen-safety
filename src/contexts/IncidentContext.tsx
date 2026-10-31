@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { Incident, IncidentType, LocationData } from '../types';
 import { incidentService } from '../services/incidentService';
 import { aiTriageService } from '../services/aiTriageService';
+import { contactService } from '../services/contactService';
+import { notificationService } from '../services/notificationService';
 import { useAuth } from './AuthContext';
 import { useLocation } from './LocationContext';
 
@@ -123,6 +125,22 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setActiveIncident(incident);
     setHistoryIncidents((prev) => [incident, ...prev]);
     setIsSubmittingSOS(false);
+
+    // 4. Immediately dispatch cellular SMS with live GPS location to trusted contacts (Automated dispatch, not a draft)
+    contactService
+      .getContacts(user.id)
+      .then((contacts) => {
+        if (contacts && contacts.length > 0) {
+          notificationService.dispatchEmergencyAlertToContacts({
+            incident,
+            victimName: user.fullName || 'Citizen in Distress',
+            contacts,
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('Auto SMS dispatch on SOS trigger warning:', err);
+      });
 
     // 3. Asynchronously request AI Triage in background without blocking UI
     // Pass incidentId + correct field names to match Person 3's TriageRequest schema
