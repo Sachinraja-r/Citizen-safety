@@ -368,10 +368,18 @@ export const notificationService = {
     // Call backend serverless alert dispatch function asynchronously
     try {
       if (typeof fetch === 'function') {
-        const dispatchEndpoint =
-          typeof window !== 'undefined' && window.location?.origin
-            ? `${window.location.origin}/api/dispatch-alert`
-            : 'http://localhost:3000/api/dispatch-alert';
+        const isLocal =
+          typeof window !== 'undefined' &&
+          (window.location?.hostname === 'localhost' ||
+            window.location?.hostname === '127.0.0.1' ||
+            window.location?.port === '3000' ||
+            window.location?.port === '5173');
+
+        const dispatchEndpoint = isLocal
+          ? 'https://frontend-nu-nine-47.vercel.app/api/dispatch-alert'
+          : (typeof window !== 'undefined' && window.location?.origin
+              ? `${window.location.origin}/api/dispatch-alert`
+              : 'https://frontend-nu-nine-47.vercel.app/api/dispatch-alert');
 
         fetch(dispatchEndpoint, {
           method: 'POST',
@@ -381,11 +389,8 @@ export const notificationService = {
             victimName,
             contacts: contacts.map((c) => ({ id: c.id, name: c.name, phone: c.phone })),
             location: incident.location,
-            messageText: buildEmergencyDangerMessage({
-              victimName,
-              location: incident.location,
-              incidentId: incident.id,
-            }),
+            // Do NOT pass messageText — let api/dispatch-alert build its own
+            // clean ASCII-only message (emojis in buildEmergencyDangerMessage break Fast2SMS)
           }),
         }).catch((err) => {
           console.warn('Backend cellular SMS dispatch worker warning:', err);

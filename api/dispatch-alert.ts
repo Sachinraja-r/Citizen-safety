@@ -145,6 +145,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
 
+        let gatewayError: string | null = null;
+
         // 3. Automated India SMS via Fast2SMS (Quick route — GET request, no DLT template needed)
         if (fast2SmsApiKey) {
           try {
@@ -152,17 +154,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.log(`[Fast2SMS] Digits: ${rawDigits} | Length: ${rawDigits.length}`);
             if (rawDigits.length === 10) {
               const trackingUrl = `https://frontend-nu-nine-47.vercel.app/emergency/${incidentId}`;
-              const cleanVictim = (victimName || 'Citizen').replace(/[^\x00-\x7F]/g, '').trim();
-              const cleanAddress = address ? address.replace(/[^\x00-\x7F]/g, '').substring(0, 50) : '';
+              const cleanVictim = (victimName || 'Citizen').replace(/[^\x00-\x7F]/g, '').trim().substring(0, 15);
 
-              // Clean emergency message with Live Map pin + Live Victim Tracker link
+              // Compact emergency message with Live Map pin + Live Victim Tracker link
+              // Kept strictly under 160 characters so telecom bills only 1 SMS part (₹5)
               const smsLines = [
-                `SOS ALERT from ${cleanVictim}! I am in danger.`,
-                `Live Map Pin: ${mapsPin}`,
-                `Track Victim: ${trackingUrl}`,
-                cleanAddress ? `Area: ${cleanAddress}` : '',
-                `Call 112 immediately!`,
-              ].filter(Boolean);
+                `SOS ALERT: ${cleanVictim} in danger!`,
+                `Map: ${mapsPin}`,
+                `Live: ${trackingUrl}`,
+                `Call 112!`,
+              ];
 
               const smsText = smsLines.join('\n');
 
@@ -172,7 +173,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 message: smsText,
                 numbers: rawDigits,
               });
-              console.log(`[Fast2SMS] Sending GET | msg: ${smsText}`);
+              console.log(`[Fast2SMS] Sending GET | len: ${smsText.length} | msg: ${smsText}`);
               const f2Res = await fetch(
                 `https://www.fast2sms.com/dev/bulkV2?${params.toString()}`,
                 {
@@ -188,12 +189,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               if (f2Body?.return === true) {
                 dispatchChannels.push('FAST2SMS_CARRIER_GATEWAY');
               } else {
-                console.warn('[Fast2SMS] Failed:', f2Body?.message || JSON.stringify(f2Body));
+                gatewayError = f2Body?.message || `Fast2SMS error code ${f2Body?.status_code || f2Res.status}`;
+                console.warn('[Fast2SMS] Failed:', gatewayError);
               }
             } else {
-              console.warn(`[Fast2SMS] Invalid phone length (${rawDigits.length}), skipping.`);
+              gatewayError = `Invalid phone number length: ${rawDigits.length} digits`;
+              console.warn(`[Fast2SMS] ${gatewayError}, skipping.`);
             }
           } catch (f2Err: any) {
+            gatewayError = f2Err.message;
             console.warn('Fast2SMS exception:', f2Err.message);
           }
         } else {
@@ -223,8 +227,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
 
-        // Default automated simulation if no paid telco keys are active
+        const isRealCarrierSent = dispatchChannels.some((c) =>
+          ['FAST2SMS_CARRIER_GATEWAY', 'TWILIO_CELLULAR_SMS', 'TWILIO_WHATSAPP_API'].includes(c)
+        );
+
         if (dispatchChannels.length === 0) {
+          if (gatewayError) {
+            return {
+              contactId: contact.id,
+              name: contact.name,
+              phone: cleanPhone,
+              status: 'FAILED',
+              reason: gatewayError,
+              channels: [],
+              timestamp: new Date().toISOString(),
+            };
+          }
           dispatchChannels.push('AUTOMATED_CARRIER_CLOUD_GATEWAY (Simulated Demo)');
           console.log(`[AUTOMATIC DISPATCH] To: ${contact.name} (${cleanPhone}) | Message:\n${dangerMessage}`);
         }
@@ -233,8 +251,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           contactId: contact.id,
           name: contact.name,
           phone: cleanPhone,
-          status: 'SENT',
+          status: isRealCarrierSent || dispatchChannels.includes('AUTOMATED_CARRIER_CLOUD_GATEWAY (Simulated Demo)') ? 'SENT' : 'FAILED',
           channels: dispatchChannels,
+          reason: gatewayError || undefined,
           timestamp: new Date().toISOString(),
         };
       })

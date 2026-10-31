@@ -22,6 +22,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path,
       },
+      '/api/dispatch-alert': {
+        target: 'https://frontend-nu-nine-47.vercel.app',
+        changeOrigin: true,
+      },
     },
   },
   build: {
