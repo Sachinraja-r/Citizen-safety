@@ -43,6 +43,12 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
 
+  // Stable location ref so GPS updates don't re-trigger the initial load/dispatch effect
+  const locationRef = React.useRef(location);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
+
   useEffect(() => {
     if (!incidentId) return;
 
@@ -69,7 +75,7 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
                 type: 'SOS_EMERGENCY',
                 severity: 'CRITICAL',
                 status: 'OPEN',
-                location: location || { latitude: 12.8406, longitude: 77.6632 },
+                location: locationRef.current || { latitude: 12.8406, longitude: 77.6632 },
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 timeline: [],
@@ -107,7 +113,7 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
       isMounted = false;
       unsubscribe();
     };
-  }, [incidentId, user?.id, victimName, location]);
+  }, [incidentId, user?.id, victimName]); // location excluded — use locationRef to avoid re-triggering on every GPS update
 
   const origin =
     typeof window !== 'undefined' && window.location?.origin
