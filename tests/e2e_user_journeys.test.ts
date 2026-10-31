@@ -83,6 +83,56 @@ describe('User Journey 2 & 3: Onboarding & Trusted Contacts Setup', () => {
     // Test phone validation
     assert.strictEqual(validatePhone(res1.contact.phone).valid, true);
     assert.strictEqual(validatePhone('not-a-phone').valid, false);
+    // Flexible 10-digit validation
+    assert.strictEqual(validatePhone('9876543210').valid, true);
+  });
+
+  test('Trusted contacts reliably persist for UUID users and allow update & delete', async () => {
+    const { contactService } = await import('../src/services/contactService');
+    const testUserId = '5a1b3c4d-1234-4567-8901-abcdef012345';
+
+    // Add contact for UUID user
+    const addRes = await contactService.addContact(
+      {
+        name: 'Maya Sharma (Mother)',
+        phone: '9845011223',
+        relationship: 'Parent / Guardian',
+        priority: 1,
+        notifySms: true,
+        notifyCall: true,
+      },
+      testUserId
+    );
+
+    assert.ok(addRes.contact);
+    assert.strictEqual(addRes.error, null);
+    assert.strictEqual(addRes.contact.name, 'Maya Sharma (Mother)');
+
+    // Fetch contacts for this UUID user — verify it persists and is not wiped
+    const fetched = await contactService.getContacts(testUserId);
+    assert.ok(fetched.some((c) => c.name === 'Maya Sharma (Mother)'));
+
+    // Update contact
+    const contactToUpdate = fetched.find((c) => c.name === 'Maya Sharma (Mother)')!;
+    const updateRes = await contactService.updateContact(
+      {
+        ...contactToUpdate,
+        phone: '+91 98450 99999',
+      },
+      testUserId
+    );
+    assert.strictEqual(updateRes.success, true);
+
+    const updatedList = await contactService.getContacts(testUserId);
+    const updatedContact = updatedList.find((c) => c.id === contactToUpdate.id);
+    assert.strictEqual(updatedContact?.phone, '+91 98450 99999');
+
+    // Delete contact
+    const delRes = await contactService.deleteContact(contactToUpdate.id, testUserId);
+    assert.strictEqual(delRes.success, true);
+
+    const afterDel = await contactService.getContacts(testUserId);
+    assert.strictEqual(afterDel.some((c) => c.id === contactToUpdate.id), false);
   });
 });
 

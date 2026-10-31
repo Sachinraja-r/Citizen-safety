@@ -17,6 +17,8 @@ import {
   Volume2,
   VolumeX,
   CheckCircle2,
+  AlertCircle,
+  X,
 } from 'lucide-react';
 
 export const ContactsPage: React.FC = () => {
@@ -26,6 +28,7 @@ export const ContactsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<TrustedContact | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Emergency Sound & Push Notification States
   const [permission, setPermission] = useState<NotificationPermission>(
@@ -80,7 +83,13 @@ export const ContactsPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to remove this emergency contact?')) {
-      await contactService.deleteContact(id, user?.id);
+      const res = await contactService.deleteContact(id, user?.id);
+      if (res.error) {
+        setFeedback({ type: 'error', message: res.error.message });
+      } else {
+        setFeedback({ type: 'success', message: 'Emergency contact removed.' });
+        setTimeout(() => setFeedback(null), 3000);
+      }
       await fetchContacts();
     }
   };
@@ -90,14 +99,33 @@ export const ContactsPage: React.FC = () => {
     existingId?: string
   ) => {
     setModalLoading(true);
-    if (existingId) {
-      await contactService.updateContact({ ...data, id: existingId }, user?.id);
-    } else {
-      await contactService.addContact(data, user?.id);
+    try {
+      if (existingId) {
+        const res = await contactService.updateContact({ ...data, id: existingId }, user?.id);
+        if (res.error) throw res.error;
+        setFeedback({
+          type: 'success',
+          message: `Emergency contact "${data.name}" updated successfully.`,
+        });
+      } else {
+        const res = await contactService.addContact(data, user?.id);
+        if (res.error) throw res.error;
+        setFeedback({
+          type: 'success',
+          message: `Emergency contact "${data.name}" added to your safety circle.`,
+        });
+      }
+
+      setIsModalOpen(false);
+      await fetchContacts();
+      setTimeout(() => setFeedback(null), 4000);
+    } catch (err: unknown) {
+      console.error('Failed to save contact:', err);
+      // Re-throw so ContactModal displays the error and stays open for the user to edit
+      throw err;
+    } finally {
+      setModalLoading(false);
     }
-    setModalLoading(false);
-    setIsModalOpen(false);
-    await fetchContacts();
   };
 
   return (
@@ -126,6 +154,33 @@ export const ContactsPage: React.FC = () => {
       <p className="text-xs text-[#7A6570]">
         You can designate up to 5 verified contacts. In an emergency SOS, automated SMS alerts and telephony calls will be dispatched according to your priority list.
       </p>
+
+      {/* Real-time Feedback Banner */}
+      {feedback && (
+        <div
+          className={`p-3 rounded-2xl flex items-center justify-between text-xs animate-fade-in transition-all ${
+            feedback.type === 'success'
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {feedback.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            )}
+            <span className="font-semibold">{feedback.message}</span>
+          </div>
+          <button
+            onClick={() => setFeedback(null)}
+            className="text-slate-400 hover:text-slate-600 p-1"
+            aria-label="Dismiss feedback"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Contact count notice */}
       <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-[#F3D9E2] shadow-sm text-xs">

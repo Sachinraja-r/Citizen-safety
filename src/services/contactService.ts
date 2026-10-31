@@ -9,6 +9,16 @@ const getStorageKey = (userId?: string): string =>
 const isUuid = (id?: string): boolean =>
   Boolean(id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
 
+async function hasSupabaseAuthSession(): Promise<boolean> {
+  if (!isSupabaseConfigured() || !supabase) return false;
+  try {
+    const { data } = await supabase.auth.getSession();
+    return Boolean(data?.session?.user);
+  } catch {
+    return false;
+  }
+}
+
 const DEFAULT_DEMO_CONTACTS: TrustedContact[] = [
   {
     id: 'contact-1',
@@ -38,7 +48,10 @@ export const contactService = {
 
     // 1. Read existing local storage contacts for this user
     let localContacts: TrustedContact[] = [];
-    const localRaw = localStorage.getItem(key) || localStorage.getItem(CONTACTS_STORAGE_KEY);
+    const localRaw =
+      localStorage.getItem(key) ||
+      (!userId || userId === 'demo-user-101' ? localStorage.getItem(CONTACTS_STORAGE_KEY) : null);
+
     if (localRaw) {
       try {
         localContacts = JSON.parse(localRaw);
@@ -47,8 +60,9 @@ export const contactService = {
       }
     }
 
-    // 2. If Supabase is configured and user has a valid UUID, attempt cloud sync
-    if (isSupabaseConfigured() && supabase && userId && isUuid(userId)) {
+    // 2. Only attempt cloud database fetch if an active Supabase session actually exists
+    const hasSession = await hasSupabaseAuthSession();
+    if (hasSession && userId && isUuid(userId) && supabase) {
       try {
         const { data, error } = await supabase
           .from('trusted_contacts')
@@ -56,7 +70,7 @@ export const contactService = {
           .eq('user_id', userId)
           .order('priority', { ascending: true });
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           const mapped: TrustedContact[] = data.map((d) => ({
             id: d.id,
             userId: d.user_id,
@@ -69,22 +83,36 @@ export const contactService = {
             createdAt: d.created_at,
           }));
 
+          // Merge cloud contacts with any pending local-only contacts
+          const merged = [...mapped];
+          for (const loc of localContacts) {
+            if (!merged.some((c) => c.id === loc.id || (c.phone === loc.phone && c.name === loc.name))) {
+              merged.push(loc);
+            }
+          }
+          merged.sort((a, b) => a.priority - b.priority);
+
           // Synchronize to local storage
-          localStorage.setItem(key, JSON.stringify(mapped));
-          localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(mapped));
-          return mapped;
+          localStorage.setItem(key, JSON.stringify(merged));
+          localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(merged));
+          return merged;
         }
       } catch (err) {
         console.warn('Failed to fetch contacts from Supabase, using local fallback:', err);
       }
     }
 
-    // 3. If local contacts exist, NEVER wipe them out with empty array
+    // 3. Return local contacts if they exist
     if (localContacts.length > 0) {
       return localContacts;
     }
 
-    // 4. Default seed for demo or fresh user accounts so emergency dispatch always has targets
+    // 4. If key exists in localStorage but is an empty array, honor user's deletion
+    if (localRaw !== null) {
+      return [];
+    }
+
+    // 5. Default seed for demo or first-time user accounts so emergency dispatch always has targets
     localStorage.setItem(key, JSON.stringify(DEFAULT_DEMO_CONTACTS));
     localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(DEFAULT_DEMO_CONTACTS));
     return DEFAULT_DEMO_CONTACTS;
@@ -102,9 +130,10 @@ export const contactService = {
       };
     }
 
+    const tempId = 'contact-' + Date.now();
     const newContact: TrustedContact = {
       ...contact,
-      id: 'contact-' + Date.now(),
+      id: tempId,
       userId,
       createdAt: new Date().toISOString(),
     };
@@ -115,8 +144,9 @@ export const contactService = {
     localStorage.setItem(key, JSON.stringify(updated));
     localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(updated));
 
-    // If Supabase is configured and user ID is a valid UUID, persist to cloud database
-    if (isSupabaseConfigured() && supabase && userId && isUuid(userId)) {
+    // If Supabase session is active and user ID is a valid UUID, persist to cloud database
+    const hasSession = await hasSupabaseAuthSession();
+    if (hasSession && userId && isUuid(userId) && supabase) {
       try {
         const { data, error } = await supabase
           .from('trusted_contacts')
@@ -137,8 +167,9 @@ export const contactService = {
         if (error) {
           console.warn('Supabase contact insert warning:', error.message);
         } else if (data) {
+          // Replace tempId with the Supabase row UUID
           newContact.id = data.id;
-          const finalUpdated = updated.map((c) => (c.id === newContact.id ? newContact : c));
+          const finalUpdated = updated.map((c) => (c.id === tempId ? { ...c, id: data.id } : c));
           localStorage.setItem(key, JSON.stringify(finalUpdated));
           localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(finalUpdated));
         }
@@ -160,7 +191,8 @@ export const contactService = {
     localStorage.setItem(key, JSON.stringify(updated));
     localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(updated));
 
-    if (isSupabaseConfigured() && supabase && userId && isUuid(userId)) {
+    const hasSession = await hasSupabaseAuthSession();
+    if (hasSession && userId && isUuid(userId) && supabase && isUuid(contact.id)) {
       try {
         const { error } = await supabase
           .from('trusted_contacts')
@@ -175,10 +207,11 @@ export const contactService = {
           .eq('id', contact.id)
           .eq('user_id', userId);
 
-        if (error) throw error;
+        if (error) {
+          console.warn('Supabase update contact warning:', error.message);
+        }
       } catch (err) {
         console.warn('Supabase update contact warning:', err);
-        return { success: true, error: null }; // Preserved locally
       }
     }
 
@@ -193,7 +226,8 @@ export const contactService = {
     localStorage.setItem(key, JSON.stringify(updated));
     localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(updated));
 
-    if (isSupabaseConfigured() && supabase && userId && isUuid(userId)) {
+    const hasSession = await hasSupabaseAuthSession();
+    if (hasSession && userId && isUuid(userId) && supabase && isUuid(id)) {
       try {
         const { error } = await supabase
           .from('trusted_contacts')
@@ -201,7 +235,9 @@ export const contactService = {
           .eq('id', id)
           .eq('user_id', userId);
 
-        if (error) throw error;
+        if (error) {
+          console.warn('Supabase delete contact warning:', error.message);
+        }
       } catch (err) {
         console.warn('Supabase delete contact warning:', err);
       }
