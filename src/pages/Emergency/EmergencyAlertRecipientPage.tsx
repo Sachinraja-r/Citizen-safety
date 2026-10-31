@@ -52,12 +52,16 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
       return;
     }
 
-    // Verify token validity
-    const tokenResult = verifySecureEmergencyToken(id, token);
-    if (!tokenResult.valid) {
-      setAuthError(tokenResult.error || 'Access Denied: Invalid or expired emergency tracking token.');
-      setLoading(false);
-      return;
+    // Verify token validity if token query param is provided
+    let tokenContactId: string | undefined;
+    if (token) {
+      const tokenResult = verifySecureEmergencyToken(id, token);
+      if (!tokenResult.valid) {
+        setAuthError(tokenResult.error || 'Access Denied: Invalid or expired emergency tracking token.');
+        setLoading(false);
+        return;
+      }
+      tokenContactId = tokenResult.contactId;
     }
 
     // 1. Initial Fetch incident details
@@ -70,7 +74,7 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
         // Check if already acknowledged
         notificationService.getIncidentNotifications(id).then((records) => {
           const matching = records.find(
-            (r) => r.secureToken === token || (tokenResult.contactId && r.contactId === tokenResult.contactId)
+            (r) => (token && r.secureToken === token) || (tokenContactId && r.contactId === tokenContactId)
           );
           if (matching) {
             setContactName(matching.contactName);
@@ -145,18 +149,29 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
 
   // 2. Contact Acknowledgement Handler
   const handleAcknowledge = async () => {
-    if (!incident || !token) return;
+    if (!incident) return;
     setIsAcknowledging(true);
 
-    const res = await notificationService.acknowledgeAlert(incident.id, token, contactName);
-    setIsAcknowledging(false);
-
-    if (res.success) {
+    if (token) {
+      const res = await notificationService.acknowledgeAlert(incident.id, token, contactName);
+      if (res.success) {
+        setIsAcknowledged(true);
+      }
+    } else {
+      // Direct acknowledgment for emergency contacts arriving via direct SMS link
+      const list = await notificationService.getIncidentNotifications(incident.id);
+      if (list.length > 0) {
+        list[0].status = 'ACKNOWLEDGED';
+        list[0].acknowledgedAt = new Date().toISOString();
+        notificationService.notifyListeners(incident.id, [...list]);
+      }
       setIsAcknowledged(true);
-      stopEmergencyAlertSound();
-      stopVibration();
-      setIsPlayingAudio(false);
     }
+
+    setIsAcknowledging(false);
+    stopEmergencyAlertSound();
+    stopVibration();
+    setIsPlayingAudio(false);
   };
 
   // Loading State

@@ -151,14 +151,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const rawDigits = cleanPhone.replace(/^\+91/, '').replace(/\D/g, '');
             console.log(`[Fast2SMS] Digits: ${rawDigits} | Length: ${rawDigits.length}`);
             if (rawDigits.length === 10) {
-              // Clean message — no emojis, no special chars
-              const smsText = [
-                `SOS ALERT from ${(victimName || 'Citizen').replace(/[^\x00-\x7F]/g, '').trim()}`,
-                `GPS: ${lat.toFixed(6)},${lon.toFixed(6)}`,
-                address ? `Area: ${address.replace(/[^\x00-\x7F]/g, '').substring(0, 50)}` : '',
-                `Ref: ${incidentId}`,
-                `Call 112 now!`,
-              ].filter(Boolean).join('. ');
+              const trackingUrl = `https://frontend-nu-nine-47.vercel.app/emergency/${incidentId}`;
+              const cleanVictim = (victimName || 'Citizen').replace(/[^\x00-\x7F]/g, '').trim();
+              const cleanAddress = address ? address.replace(/[^\x00-\x7F]/g, '').substring(0, 50) : '';
+
+              // Clean emergency message with Live Map pin + Live Victim Tracker link
+              const smsLines = [
+                `SOS ALERT from ${cleanVictim}! I am in danger.`,
+                `Live Map Pin: ${mapsPin}`,
+                `Track Victim: ${trackingUrl}`,
+                cleanAddress ? `Area: ${cleanAddress}` : '',
+                `Call 112 immediately!`,
+              ].filter(Boolean);
+
+              const smsText = smsLines.join('\n');
 
               // q route uses GET with query params (per updated Fast2SMS docs)
               const params = new URLSearchParams({
