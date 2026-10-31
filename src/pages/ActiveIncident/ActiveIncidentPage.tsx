@@ -136,20 +136,20 @@ export const ActiveIncidentPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="py-20 text-center">
-        <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-xs text-slate-400">Loading incident #{id} telemetry...</p>
+      <div className="py-20 text-center animate-fade-in">
+        <div className="w-9 h-9 border-3 border-[#E91E63] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-xs text-[#7A6570] font-semibold">Connecting to live incident #{id} telemetry...</p>
       </div>
     );
   }
 
   if (!incident) {
     return (
-      <div className="py-16 text-center">
+      <div className="py-16 text-center animate-fade-in bg-white border border-[#F3D9E2] rounded-3xl p-6 shadow-sm">
         <AlertOctagon className="w-10 h-10 text-amber-500 mx-auto mb-3" />
-        <h3 className="text-base font-bold text-white mb-1">Incident Record Not Found</h3>
-        <p className="text-xs text-slate-400 mb-4">The requested emergency incident reference does not exist.</p>
-        <Button variant="secondary" size="sm" onClick={() => navigate('/app')}>
+        <h3 className="text-base font-bold text-[#2D1B24] mb-1">Incident Record Not Found</h3>
+        <p className="text-xs text-[#7A6570] mb-4">The requested emergency incident reference does not exist or has expired.</p>
+        <Button variant="primary" size="sm" onClick={() => navigate('/app')}>
           Return to Safety Dashboard
         </Button>
       </div>
