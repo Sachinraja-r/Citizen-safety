@@ -24,6 +24,9 @@ import {
   ShieldCheck,
   AlertTriangle,
   Lock,
+  Siren,
+  Car,
+  HeartPulse,
 } from 'lucide-react';
 
 export const EmergencyAlertRecipientPage: React.FC = () => {
@@ -57,7 +60,7 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
       return;
     }
 
-    // Fetch incident details
+    // 1. Initial Fetch incident details
     incidentService.getIncident(id).then((inc) => {
       if (!inc) {
         setAuthError('Emergency incident record not found or has been purged.');
@@ -80,8 +83,25 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
       setLoading(false);
     });
 
-    // Clean up audio on unmount
+    // 2. Realtime listener: updates instantly when police / ambulance arrives or resolves
+    const unsubscribe = incidentService.subscribeToIncident(id, (updated) => {
+      if (updated) {
+        setIncident((prev) => ({ ...(prev || {}), ...updated }));
+      }
+    });
+
+    // 3. Fallback interval polling every 3 seconds
+    const pollTimer = setInterval(async () => {
+      const refreshed = await incidentService.getIncident(id);
+      if (refreshed) {
+        setIncident(refreshed);
+      }
+    }, 3000);
+
+    // Clean up audio and subscriptions on unmount
     return () => {
+      unsubscribe();
+      clearInterval(pollTimer);
       stopEmergencyAlertSound();
       stopVibration();
     };
@@ -316,7 +336,12 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
           {hasLocation ? (
             <>
               <div className="rounded-xl overflow-hidden border border-[#F3D9E2]">
-                <MapView incidentLocation={incident.location} height="220px" zoom={15} />
+                <MapView
+                  incidentLocation={incident.location}
+                  responder={incident.assignedResponder}
+                  height="220px"
+                  zoom={15}
+                />
               </div>
               <p className="text-xs font-medium text-[#2D1B24] bg-[#FFF5F8] p-2.5 rounded-xl border border-[#F3D9E2]">
                 📍 {incident.location?.addressText || (typeof incident.location?.latitude === 'number' ? `${incident.location.latitude.toFixed(5)}, ${incident.location.longitude.toFixed(5)}` : 'Live City Beacon Active')}
@@ -333,15 +358,134 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
           )}
         </div>
 
-        {/* Assigned Responder Status (if unit en route) */}
-        {incident.assignedResponder && (
-          <div className="space-y-1">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#7A6570] px-1">
-              Official Response Coordination
+        {/* Live Police & Ambulance Arrival Tracking Section */}
+        <div className="bg-white border border-[#F3D9E2] shadow-sm rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#2D1B24] flex items-center gap-2">
+              <Siren className="w-4 h-4 text-red-600 animate-pulse" />
+              Emergency Services &amp; Arrival Tracker
             </h3>
-            <ResponderCard responder={incident.assignedResponder} />
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+              incident.status === 'ON_SCENE'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                : incident.status === 'RESOLVED'
+                ? 'bg-blue-50 text-blue-700 border-blue-300'
+                : 'bg-amber-50 text-amber-700 border-amber-300'
+            }`}>
+              {incident.status === 'ON_SCENE'
+                ? '✅ UNITS ON SCENE'
+                : incident.status === 'RESOLVED'
+                ? '✅ CASE RESOLVED'
+                : 'DISPATCH ACTIVE'}
+            </span>
           </div>
-        )}
+
+          {/* Prominent Arrival Banner if on-scene */}
+          {incident.status === 'ON_SCENE' && (
+            <div className="p-3.5 bg-emerald-50 border-2 border-emerald-500 rounded-xl text-xs text-emerald-950 flex items-start gap-2.5 shadow-sm animate-pulse">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-black text-sm">EMERGENCY RESPONDERS HAVE ARRIVED ON SCENE!</p>
+                <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                  {incident.assignedResponder?.name || 'Police & Ambulance units'} are physically present with the citizen at the distress GPS coordinates.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Prominent Resolved Banner if resolved */}
+          {incident.status === 'RESOLVED' && (
+            <div className="p-3.5 bg-blue-50 border-2 border-blue-500 rounded-xl text-xs text-blue-950 flex items-start gap-2.5 shadow-sm">
+              <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-black text-sm">CASE RESOLVED &amp; CITIZEN SECURED</p>
+                <p className="text-[11px] text-blue-800 mt-0.5 leading-relaxed">
+                  {incident.cancellationReason || 'Responders have successfully handled the situation. Case is safely closed.'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Dual Agency Grid: Police 112 + Ambulance 108 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            {/* Police Patrol Card */}
+            <div className="p-3 bg-[#FFF5F8] border border-[#F3D9E2] rounded-xl text-left">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-bold text-[#2D1B24] flex items-center gap-1.5 text-xs">
+                  <Car className="w-4 h-4 text-blue-600" />
+                  Police &amp; Patrol (112)
+                </span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                  incident.status === 'ON_SCENE'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : incident.status === 'RESOLVED'
+                    ? 'bg-blue-100 text-blue-800'
+                    : incident.assignedResponder && incident.assignedResponder.type !== 'AMBULANCE'
+                    ? 'bg-blue-100 text-blue-800 animate-pulse'
+                    : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {incident.status === 'ON_SCENE'
+                    ? 'Arrived'
+                    : incident.status === 'RESOLVED'
+                    ? 'Closed'
+                    : incident.assignedResponder && incident.assignedResponder.type !== 'AMBULANCE'
+                    ? 'En Route'
+                    : 'Broadcasting'}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#7A6570]">
+                {incident.status === 'ON_SCENE'
+                  ? 'Police patrol is physically at citizen location.'
+                  : incident.status === 'RESOLVED'
+                  ? 'Area secured by patrol officers.'
+                  : incident.assignedResponder && incident.assignedResponder.type !== 'AMBULANCE'
+                  ? `Unit ${incident.assignedResponder.name} driving to scene (ETA: ${incident.assignedResponder.etaMinutes || 2} min).`
+                  : 'Coordinates streaming to nearby Hoysala police patrol cars.'}
+              </p>
+            </div>
+
+            {/* Ambulance 108 Card */}
+            <div className="p-3 bg-[#FFF5F8] border border-[#F3D9E2] rounded-xl text-left">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-bold text-[#2D1B24] flex items-center gap-1.5 text-xs">
+                  <HeartPulse className="w-4 h-4 text-red-600" />
+                  Emergency Ambulance (108)
+                </span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                  incident.status === 'ON_SCENE'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : incident.status === 'RESOLVED'
+                    ? 'bg-blue-100 text-blue-800'
+                    : incident.assignedResponder?.type === 'AMBULANCE'
+                    ? 'bg-red-100 text-red-800 animate-pulse'
+                    : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {incident.status === 'ON_SCENE'
+                    ? 'On Scene'
+                    : incident.status === 'RESOLVED'
+                    ? 'Cleared'
+                    : incident.assignedResponder?.type === 'AMBULANCE'
+                    ? 'En Route'
+                    : 'Alerted'}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#7A6570]">
+                {incident.status === 'ON_SCENE'
+                  ? 'Paramedic unit is on scene for medical triage.'
+                  : incident.status === 'RESOLVED'
+                  ? 'Medical safety verified.'
+                  : incident.assignedResponder?.type === 'AMBULANCE'
+                  ? `Ambulance unit ${incident.assignedResponder.name} is driving to location.`
+                  : 'Live GPS transmitted to KSEMS ambulance emergency dispatch.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Assigned Responder Detailed Unit Card */}
+          <div className="pt-2 border-t border-[#F3D9E2]">
+            <ResponderCard responder={incident.assignedResponder} incidentStatus={incident.status} />
+          </div>
+        </div>
 
         {/* Incident Summary Card */}
         <div className="bg-white border border-[#F3D9E2] shadow-sm rounded-2xl p-4 text-xs space-y-2">

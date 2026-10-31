@@ -85,10 +85,10 @@ export const ResponderDashboard: React.FC = () => {
     setActionLoading(null);
   };
 
-  const handleResolve = async (incidentId: string) => {
+  const handleResolve = async (incidentId: string, resolutionNotes?: string) => {
     if (!session) return;
     setActionLoading(incidentId + '-resolve');
-    await incidentFeedService.resolveIncident(incidentId, session.name);
+    await incidentFeedService.resolveIncident(incidentId, session.name, resolutionNotes);
     const fresh = await incidentFeedService.getAllIncidents();
     setIncidents(fresh);
     setSelectedIncident(fresh.find(i => i.id === incidentId) || null);
@@ -131,13 +131,26 @@ export const ResponderDashboard: React.FC = () => {
             <span>Live Feed</span>
           </div>
 
-          {session && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs">
-              <Shield className="w-3.5 h-3.5 text-blue-400" />
-              <span className="font-semibold text-white">{session.name}</span>
-              <span className="text-slate-400">· {session.badgeNumber}</span>
-            </div>
-          )}
+          {/* Quick Unit Switcher for Police / Hoysala / Ambulance */}
+          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-xs">
+            <Shield className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <span className="text-slate-400 text-[10px] uppercase font-bold hidden md:inline">Unit:</span>
+            <select
+              value={session?.id}
+              onChange={(e) => {
+                const s = responderAuthService.login(e.target.value);
+                if (s) setSession(s);
+              }}
+              className="bg-transparent text-white font-semibold text-xs focus:outline-none cursor-pointer"
+            >
+              {DEMO_RESPONDERS.map((r) => (
+                <option key={r.id} value={r.id} className="bg-slate-900 text-white">
+                  {r.role === 'PARAMEDIC' ? '🚑 ' : r.role === 'PINK_HOYSALA' ? '🌸 ' : '🚔 '}
+                  {r.name} ({r.role === 'PARAMEDIC' ? 'Ambulance' : r.role === 'PINK_HOYSALA' ? 'Hoysala' : 'Police'})
+                </option>
+              ))}
+            </select>
+          </div>
 
           <button
             onClick={handleLogout}
@@ -313,11 +326,11 @@ const IncidentDetailPanel: React.FC<{
   actionLoading: string | null;
   onAccept: (id: string) => void;
   onOnScene: (id: string) => void;
-  onResolve: (id: string) => void;
+  onResolve: (id: string, notes?: string) => void;
 }> = ({ incident, session, actionLoading, onAccept, onOnScene, onResolve }) => {
   const statusMeta = formatIncidentStatus(incident.status as any);
   const isClosed = ['RESOLVED', 'CANCELLED'].includes(incident.status);
-  const isAssignedToMe = incident.assignedResponderId === session?.id;
+  const [resolutionNotes, setResolutionNotes] = useState('Citizen safe & situation secured. Case closed.');
 
   return (
     <div className="p-5 space-y-5 max-w-3xl">
@@ -421,9 +434,16 @@ const IncidentDetailPanel: React.FC<{
       {/* Action Buttons (context-sensitive) */}
       {!isClosed && (
         <div className="bg-[#111827] border border-slate-800 rounded-2xl p-4 space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-            <Radio className="w-3.5 h-3.5 text-amber-400" />
-            Dispatch Actions
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Radio className="w-3.5 h-3.5 text-amber-400" />
+              Dispatch Actions
+            </span>
+            {session && (
+              <span className="text-[10px] text-slate-500 font-mono">
+                Active: {session.name}
+              </span>
+            )}
           </h3>
 
           {incident.status === 'OPEN' && (
@@ -441,11 +461,11 @@ const IncidentDetailPanel: React.FC<{
             </button>
           )}
 
-          {incident.status === 'ASSIGNED' && isAssignedToMe && (
+          {incident.status === 'ASSIGNED' && (
             <button
               onClick={() => onOnScene(incident.id)}
               disabled={!!actionLoading}
-              className="w-full py-3.5 rounded-xl font-bold text-sm bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+              className="w-full py-3.5 rounded-xl font-bold text-sm bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition-colors shadow-lg shadow-amber-950/50"
             >
               {actionLoading === incident.id + '-scene' ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -456,25 +476,51 @@ const IncidentDetailPanel: React.FC<{
             </button>
           )}
 
-          {incident.status === 'ASSIGNED' && !isAssignedToMe && (
-            <div className="text-center py-3 text-sm text-slate-400">
-              Assigned to <span className="text-white font-bold">{incident.assignedResponderName}</span>
-            </div>
-          )}
+          {incident.status === 'ON_SCENE' && (
+            <div className="space-y-3 pt-1">
+              <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-left">
+                <label className="text-[11px] font-bold text-emerald-400 block mb-1.5 uppercase tracking-wider">
+                  Case Resolution &amp; Summary Report:
+                </label>
+                <input
+                  type="text"
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                  placeholder="Enter case closure details..."
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {[
+                    'Citizen safe & escorted',
+                    'Medical first aid given, stable',
+                    'Threat de-escalated, area secure',
+                    'Police & Ambulance on-site completed',
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setResolutionNotes(preset)}
+                      className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700 transition-colors"
+                    >
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          {incident.status === 'ON_SCENE' && (isAssignedToMe || session?.role === 'DEV_ADMIN') && (
-            <button
-              onClick={() => onResolve(incident.id)}
-              disabled={!!actionLoading}
-              className="w-full py-3.5 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
-            >
-              {actionLoading === incident.id + '-resolve' ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5" />
-              )}
-              Mark Incident Resolved — Case Closed
-            </button>
+              <button
+                onClick={() => onResolve(incident.id, resolutionNotes)}
+                disabled={!!actionLoading}
+                className="w-full py-3.5 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition-colors shadow-lg shadow-emerald-950/50"
+              >
+                {actionLoading === incident.id + '-resolve' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5" />
+                )}
+                Update Case: Mark Safely Resolved &amp; Close
+              </button>
+            </div>
           )}
         </div>
       )}

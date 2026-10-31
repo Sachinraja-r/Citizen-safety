@@ -68,14 +68,32 @@ export const incidentFeedService = {
     const inc = all.find(i => i.id === incidentId);
     if (!inc) return false;
 
+    // Detect unit type based on responder ID / name
+    const isAmbulance = responderId === 'resp-para-03' || responderName.toLowerCase().includes('paramedic') || responderName.toLowerCase().includes('ambulance');
+    const isFemaleUnit = responderId === 'resp-pink-01' || responderName.toLowerCase().includes('pink') || responderName.toLowerCase().includes('menon');
+
+    const responderType = isAmbulance
+      ? 'AMBULANCE'
+      : isFemaleUnit
+      ? 'FEMALE_OFFICER_UNIT'
+      : 'PATROL_CAR';
+
+    const unitLabel = isAmbulance
+      ? 'KSEMS Ambulance 03 (Medical Support)'
+      : isFemaleUnit
+      ? 'Pink Hoysala Unit 14 (Specialized Patrol)'
+      : 'Police Patrol Car Unit 08 (Bangalore City Police)';
+
     inc.status = 'ASSIGNED';
     inc.assignedResponder = {
       id: responderId,
       name: responderName,
-      type: 'PATROL_CAR',
+      type: responderType as any,
       status: 'EN_ROUTE',
-      verifiedLevel: 'VERIFIED_OFFICER',
-      etaMinutes: Math.floor(Math.random() * 5) + 2,
+      verifiedLevel: isAmbulance ? 'VERIFIED_PARAMEDIC' : 'VERIFIED_OFFICER',
+      etaMinutes: Math.floor(Math.random() * 4) + 2,
+      isFemaleOfficerAvailable: isFemaleUnit,
+      contactPhone: isAmbulance ? '+91 98450 10800' : isFemaleUnit ? '+91 94808 01000' : '+91 94808 01122',
       location: {
         latitude: inc.location.latitude + 0.008,
         longitude: inc.location.longitude + 0.006,
@@ -86,8 +104,8 @@ export const incidentFeedService = {
       id: 'evt-' + Date.now(),
       timestamp: now,
       status: 'ASSIGNED',
-      title: `Accepted by ${responderName}`,
-      description: `Emergency unit ${responderName} has accepted dispatch and is en route.`,
+      title: `${unitLabel} Dispatched`,
+      description: `${responderName} (${unitLabel}) accepted dispatch and is en route to scene.`,
       actor: responderName,
     });
     incidentService.saveIncidentLocally(inc);
@@ -112,18 +130,24 @@ export const incidentFeedService = {
     const now = new Date().toISOString();
     const all = incidentService.getAllLocalIncidents();
     const inc = all.find(i => i.id === incidentId);
-    if (!inc || !inc.assignedResponder) return false;
+    if (!inc) return false;
 
     inc.status = 'ON_SCENE';
-    inc.assignedResponder.status = 'BUSY';
-    inc.assignedResponder.etaMinutes = 0;
+    if (inc.assignedResponder) {
+      inc.assignedResponder.status = 'BUSY';
+      inc.assignedResponder.etaMinutes = 0;
+      inc.assignedResponder.location = {
+        latitude: inc.location.latitude + 0.0001,
+        longitude: inc.location.longitude + 0.0001,
+      };
+    }
     inc.updatedAt = now;
     inc.timeline.push({
       id: 'evt-' + Date.now(),
       timestamp: now,
       status: 'ON_SCENE',
       title: `${responderName} Arrived On Scene`,
-      description: 'Responder has arrived at the citizen GPS location.',
+      description: `${responderName} has arrived at the citizen GPS coordinates. On-scene protection & assistance actively underway.`,
       actor: responderName,
     });
     incidentService.saveIncidentLocally(inc);
@@ -143,21 +167,24 @@ export const incidentFeedService = {
     return true;
   },
 
-  async resolveIncident(incidentId: string, responderName: string): Promise<boolean> {
+  async resolveIncident(incidentId: string, responderName: string, resolutionNotes?: string): Promise<boolean> {
     const now = new Date().toISOString();
     const all = incidentService.getAllLocalIncidents();
     const inc = all.find(i => i.id === incidentId);
     if (!inc) return false;
 
+    const note = resolutionNotes || `Situation resolved & citizen secured safely by ${responderName}. Case closed.`;
+
     inc.status = 'RESOLVED';
     inc.resolvedAt = now;
     inc.updatedAt = now;
+    inc.cancellationReason = note;
     inc.timeline.push({
       id: 'evt-' + Date.now(),
       timestamp: now,
       status: 'RESOLVED',
-      title: 'Incident Resolved',
-      description: `Situation resolved by ${responderName}. Case closed.`,
+      title: 'Incident Resolved — Case Closed',
+      description: note,
       actor: responderName,
     });
     incidentService.saveIncidentLocally(inc);

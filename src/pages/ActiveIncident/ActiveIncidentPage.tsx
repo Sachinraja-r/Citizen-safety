@@ -296,7 +296,7 @@ export const ActiveIncidentPage: React.FC = () => {
       </div>
 
       {/* Assigned Responder Unit Card */}
-      <ResponderCard responder={incident.assignedResponder} />
+      <ResponderCard responder={incident.assignedResponder} incidentStatus={incident.status} />
 
       {/* AI Triage Intelligence Enrichment (Person 3 AI/ML Engine) */}
       {incident.aiTriage && (

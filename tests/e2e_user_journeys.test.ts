@@ -236,4 +236,40 @@ describe('User Journey 7 & 8: Active Incident Tracking & Status Updates', () => 
     assert.strictEqual(updated?.cancellationReason, 'Accidental button tap / false alarm');
     assert.strictEqual(updated?.timeline.length, 2);
   });
+
+  test('Police and Ambulance dispatch, on-scene arrival, and case resolution with closure notes', async () => {
+    const { incidentService } = await import('../src/services/incidentService');
+    const { incidentFeedService } = await import('../src/services/incidentFeedService');
+
+    // 1. Citizen triggers SOS
+    const { incident } = await incidentService.createIncident({
+      userId: 'test-citizen-789',
+      type: 'SOS_EMERGENCY',
+      location: { latitude: 12.9716, longitude: 77.5946, addressText: 'Cubbon Park Metro Station' },
+    });
+    assert.ok(incident);
+    assert.strictEqual(incident.status, 'OPEN');
+
+    // 2. Paramedic / Ambulance unit accepts dispatch
+    await incidentFeedService.acceptIncident(incident.id, 'resp-para-03', 'Paramedic Suresh V.');
+    const assignedInc = await incidentService.getIncident(incident.id);
+    assert.strictEqual(assignedInc?.status, 'ASSIGNED');
+    assert.strictEqual(assignedInc?.assignedResponder?.type, 'AMBULANCE');
+    assert.strictEqual(assignedInc?.assignedResponder?.status, 'EN_ROUTE');
+
+    // 3. Responder marks on-scene (arrived at citizen location)
+    await incidentFeedService.markOnScene(incident.id, 'Paramedic Suresh V.');
+    const onSceneInc = await incidentService.getIncident(incident.id);
+    assert.strictEqual(onSceneInc?.status, 'ON_SCENE');
+    assert.strictEqual(onSceneInc?.assignedResponder?.status, 'BUSY');
+    assert.strictEqual(onSceneInc?.assignedResponder?.etaMinutes, 0);
+
+    // 4. Responder updates case after solving
+    const closureNote = 'Citizen safe, first aid administered, situation stabilized.';
+    await incidentFeedService.resolveIncident(incident.id, 'Paramedic Suresh V.', closureNote);
+    const resolvedInc = await incidentService.getIncident(incident.id);
+    assert.strictEqual(resolvedInc?.status, 'RESOLVED');
+    assert.ok(resolvedInc?.resolvedAt);
+    assert.strictEqual(resolvedInc?.cancellationReason, closureNote);
+  });
 });
