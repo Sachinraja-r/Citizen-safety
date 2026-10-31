@@ -148,27 +148,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (fast2SmsApiKey) {
           try {
             const rawDigits = cleanPhone.replace(/^\+91/, '').replace(/\D/g, '');
+            console.log(`[Fast2SMS] Key present: YES | Digits: ${rawDigits} | Length: ${rawDigits.length}`);
             if (rawDigits.length === 10) {
+              const f2Payload = {
+                route: 'q',
+                message: dangerMessage,
+                flash: 0,
+                numbers: rawDigits,
+              };
               const f2Res = await fetch('https://www.fast2sms.com/dev/bulkV2', {
                 method: 'POST',
                 headers: {
                   authorization: fast2SmsApiKey,
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                  route: 'q',
-                  message: dangerMessage,
-                  flash: 0,
-                  numbers: rawDigits,
-                }),
+                body: JSON.stringify(f2Payload),
               });
-              if (f2Res.ok) {
+              const f2Body = await f2Res.json().catch(() => ({})) as any;
+              console.log(`[Fast2SMS] Response status: ${f2Res.status} | Body:`, JSON.stringify(f2Body));
+              if (f2Res.ok && f2Body?.return !== false) {
                 dispatchChannels.push('FAST2SMS_CARRIER_GATEWAY');
+              } else {
+                console.warn('[Fast2SMS] Delivery failed:', f2Body?.message || f2Body);
               }
+            } else {
+              console.warn(`[Fast2SMS] Phone number invalid length (${rawDigits.length} digits), skipping.`);
             }
           } catch (f2Err: any) {
             console.warn('Fast2SMS exception:', f2Err.message);
           }
+        } else {
+          console.log('[Fast2SMS] FAST2SMS_API_KEY env var not set — skipping.');
         }
 
         // 4. Custom Telco Dispatch Webhook (if configured)
