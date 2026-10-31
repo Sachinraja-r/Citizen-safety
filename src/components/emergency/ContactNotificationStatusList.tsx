@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { contactService } from '../../services/contactService';
 import { ContactNotificationRecord, LocationData } from '../../types';
@@ -20,6 +20,7 @@ import {
   Send,
   MapPin,
   AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
 
 interface ContactNotificationStatusListProps {
@@ -40,6 +41,11 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showFullPreview, setShowFullPreview] = useState(false);
+  const hasAutoOpenedSmsRef = useRef(false);
+
+  const isMobile =
+    typeof navigator !== 'undefined' &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (!incidentId) return;
@@ -214,7 +220,23 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
   const acknowledgedCount = notifications.filter((n) => n.status === 'ACKNOWLEDGED').length;
   const allPhones = notifications.map((n) => n.contactPhone);
   const groupSmsUrl = notificationService.generateGroupSmsIntentUrl(allPhones, dangerMessage);
+  const whatsAppBroadcastUrl = notificationService.generateWhatsAppBroadcastUrl(dangerMessage);
   const hasNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
+
+  // Auto-launch SMS intent on mobile handset when SOS is triggered
+  useEffect(() => {
+    if (isMobile && groupSmsUrl && notifications.length > 0 && !hasAutoOpenedSmsRef.current) {
+      hasAutoOpenedSmsRef.current = true;
+      const timer = setTimeout(() => {
+        try {
+          window.location.href = groupSmsUrl;
+        } catch {
+          // ignore
+        }
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile, groupSmsUrl, notifications.length]);
 
   return (
     <div className={`w-full bg-white border-2 border-red-200 shadow-md rounded-2xl p-4 text-left space-y-3.5 ${className}`}>
@@ -261,23 +283,38 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
         </span>
       </div>
 
-      {/* Broadcast Quick Action Buttons (Optional Device-Level Fallback) */}
-      <div className="space-y-1.5 pt-0.5">
+      {/* Broadcast Quick Action Buttons (Immediate 1-Tap Trigger for SMS & WhatsApp) */}
+      <div className="space-y-2 pt-0.5">
         <div className="flex items-center justify-between text-[10px] text-[#7A6570]">
-          <span className="font-bold uppercase tracking-wider">Device-Level Relays (Optional Manual Trigger):</span>
+          <span className="font-bold uppercase tracking-wider">Device Message Relays (SMS &amp; WhatsApp):</span>
+          <span className="text-emerald-700 font-semibold">Live GPS Attached</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {/* Send SMS to all */}
           <a
             href={groupSmsUrl}
-            className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm transition-colors text-center"
+            className="inline-flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-500/25 transition-all active:scale-[0.98] text-center"
             title="Open device messaging app with danger message and contacts pre-filled"
           >
-            <Send className="w-3.5 h-3.5" />
-            <span>Open Phone SMS App</span>
+            <Send className="w-4 h-4" />
+            <span>Send Cellular SMS to All</span>
           </a>
 
+          {/* Send WhatsApp to all */}
+          <a
+            href={whatsAppBroadcastUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 py-3 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/25 transition-all active:scale-[0.98] text-center"
+            title="Open WhatsApp with danger message and live GPS link pre-filled"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>Send via WhatsApp to All</span>
+          </a>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
           {/* Native Web Share */}
           {hasNativeShare ? (
             <button
@@ -298,7 +335,7 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold text-xs transition-colors"
             >
-              <Share2 className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3.5 h-3.5" />
               <span>WhatsApp Direct</span>
             </a>
           )}
@@ -412,22 +449,22 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
                 <div className="flex items-center gap-2">
                   <a
                     href={perContactSmsUrl}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-[#F3D9E2] text-[#2D1B24] hover:border-red-400 font-bold text-[10px] shadow-2xs"
-                    title="Send cellular SMS to this contact"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-[11px] shadow-2xs transition-colors"
+                    title="Send cellular SMS to this contact with live GPS pin"
                   >
-                    <MessageSquare className="w-3 h-3 text-red-500" />
-                    <span>SMS: I'm in Danger</span>
+                    <MessageSquare className="w-3.5 h-3.5 text-red-600" />
+                    <span>Send SMS</span>
                   </a>
 
                   <a
                     href={perContactWhatsAppUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold text-[10px]"
-                    title="Open pre-filled WhatsApp danger dispatch"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-[11px] shadow-2xs transition-colors"
+                    title="Open pre-filled WhatsApp danger dispatch with live GPS pin"
                   >
-                    <Share2 className="w-3 h-3 text-emerald-600" />
-                    <span>WhatsApp</span>
+                    <Share2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Send WhatsApp</span>
                   </a>
                 </div>
 

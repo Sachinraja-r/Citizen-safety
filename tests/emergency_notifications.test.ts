@@ -143,7 +143,7 @@ describe('Emergency Notifications & Trusted Contact Alert Suite', () => {
     assert.strictEqual(unsubOk, true);
   });
 
-  // Scenario 7: SMS fallback formatting
+  // Scenario 7: SMS & WhatsApp fallback formatting
   test('7. WhatsApp and SMS fallbacks generate clean pre-filled links', () => {
     const url = notificationService.generateWhatsAppFallbackUrl(
       '+91 98450 11223',
@@ -155,6 +155,10 @@ describe('Emergency Notifications & Trusted Contact Alert Suite', () => {
     assert.ok(url.includes('Priya'));
     assert.ok(url.includes('INC-123456'));
     assert.ok(url.includes('mock-token-xyz'));
+
+    const waBroadcast = notificationService.generateWhatsAppBroadcastUrl('🚨 EMERGENCY SOS: I AM IN DANGER!');
+    assert.ok(waBroadcast.startsWith('https://api.whatsapp.com/send?text='));
+    assert.ok(waBroadcast.includes('EMERGENCY'));
   });
 
   // Scenario 8: One contact fails while others succeed

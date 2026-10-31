@@ -609,6 +609,14 @@ export const notificationService = {
   },
 
   /**
+   * Generates a WhatsApp broadcast link that opens WhatsApp with danger text pre-filled
+   * and lets user select any or all contacts / groups.
+   */
+  generateWhatsAppBroadcastUrl(message: string): string {
+    return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+  },
+
+  /**
    * Triggers the OS native Web Share sheet (Android / iOS / PWA)
    * Allows citizen to dispatch the "I am in danger" beacon to WhatsApp, SMS, or any contact.
    */
