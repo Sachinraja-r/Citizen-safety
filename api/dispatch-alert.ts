@@ -151,19 +151,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const rawDigits = cleanPhone.replace(/^\+91/, '').replace(/\D/g, '');
             console.log(`[Fast2SMS] Key present: YES | Digits: ${rawDigits} | Length: ${rawDigits.length}`);
             if (rawDigits.length === 10) {
-              // Strip ALL emojis and non-ASCII — Fast2SMS spam filter blocks them
-              const smsText = dangerMessage
-                .replace(/[^\x00-\x7F]/g, '')   // remove all non-ASCII (emojis, special chars)
-                .replace(/\n{3,}/g, '\n\n')
-                .trim();
+              // Fast2SMS q-route is strict: no URLs, no promotional text, keep it short & plain
+              // Send GPS coords directly — contact can paste into maps app
+              const smsText = [
+                `SOS ALERT from ${(victimName || 'Citizen').replace(/[^\x00-\x7F]/g, '')}`,
+                `GPS: ${lat.toFixed(6)},${lon.toFixed(6)}`,
+                address ? `Area: ${address.replace(/[^\x00-\x7F]/g, '').substring(0, 60)}` : '',
+                `Incident: ${incidentId}`,
+                `Call 112 immediately!`,
+              ].filter(Boolean).join('\n');
 
               const f2Payload = {
-                route: 'q',          // Quick route — no sender ID needed
+                route: 'v3',
+                sender_id: 'FSTSMS',   // Fast2SMS default sender ID for new accounts
                 message: smsText,
+                language: 'english',
                 flash: 0,
                 numbers: rawDigits,
               };
-              console.log(`[Fast2SMS] Message (sanitised): ${smsText.substring(0, 80)}...`);
+              console.log(`[Fast2SMS] SMS text: ${smsText}`);
               const f2Res = await fetch('https://www.fast2sms.com/dev/bulkV2', {
                 method: 'POST',
                 headers: {
