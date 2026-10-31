@@ -126,6 +126,27 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
     trackingUrl: defaultTrackingUrl,
   });
 
+  const acknowledgedCount = notifications.filter((n) => n.status === 'ACKNOWLEDGED').length;
+  const allPhones = notifications.map((n) => n.contactPhone);
+  const groupSmsUrl = notificationService.generateGroupSmsIntentUrl(allPhones, dangerMessage);
+  const whatsAppBroadcastUrl = notificationService.generateWhatsAppBroadcastUrl(dangerMessage);
+  const hasNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
+
+  // Auto-launch SMS intent on mobile handset when SOS is triggered (unconditionally declared hook)
+  useEffect(() => {
+    if (isMobile && groupSmsUrl && notifications.length > 0 && !hasAutoOpenedSmsRef.current) {
+      hasAutoOpenedSmsRef.current = true;
+      const timer = setTimeout(() => {
+        try {
+          window.location.href = groupSmsUrl;
+        } catch {
+          // ignore
+        }
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile, groupSmsUrl, notifications.length]);
+
   const handleCopyMessage = async () => {
     try {
       if (navigator.clipboard) {
@@ -216,27 +237,6 @@ export const ContactNotificationStatusList: React.FC<ContactNotificationStatusLi
       </div>
     );
   }
-
-  const acknowledgedCount = notifications.filter((n) => n.status === 'ACKNOWLEDGED').length;
-  const allPhones = notifications.map((n) => n.contactPhone);
-  const groupSmsUrl = notificationService.generateGroupSmsIntentUrl(allPhones, dangerMessage);
-  const whatsAppBroadcastUrl = notificationService.generateWhatsAppBroadcastUrl(dangerMessage);
-  const hasNativeShare = typeof navigator !== 'undefined' && 'share' in navigator;
-
-  // Auto-launch SMS intent on mobile handset when SOS is triggered
-  useEffect(() => {
-    if (isMobile && groupSmsUrl && notifications.length > 0 && !hasAutoOpenedSmsRef.current) {
-      hasAutoOpenedSmsRef.current = true;
-      const timer = setTimeout(() => {
-        try {
-          window.location.href = groupSmsUrl;
-        } catch {
-          // ignore
-        }
-      }, 1200);
-      return () => clearTimeout(timer);
-    }
-  }, [isMobile, groupSmsUrl, notifications.length]);
 
   return (
     <div className={`w-full bg-white border-2 border-red-200 shadow-md rounded-2xl p-4 text-left space-y-3.5 ${className}`}>
