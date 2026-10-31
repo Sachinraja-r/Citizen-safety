@@ -83,6 +83,19 @@ self.addEventListener('fetch', (event) => {
 // EMERGENCY WEB PWA PUSH NOTIFICATION & SOUND / CLICK HANDLING
 // ─────────────────────────────────────────────────────────────────────────────
 
+// SOS Morse vibration pattern (~5 seconds): S-O-S + extended alert buzz
+// S = 3 short (200ms on/100ms off), O = 3 long (600ms on/100ms off)
+// Total: ~5200ms
+const SOS_VIBRATE = [
+  200, 100, 200, 100, 200,  // S
+  400,                       // letter gap
+  600, 100, 600, 100, 600,  // O
+  400,                       // letter gap
+  200, 100, 200, 100, 200,  // S
+  200, 100,                  // brief pause
+  800,                       // final strong buzz
+];
+
 // Handle Web Push event from Push Service / PushManager
 self.addEventListener('push', (event) => {
   let data = {
@@ -108,7 +121,7 @@ self.addEventListener('push', (event) => {
     renotify: true,
     requireInteraction: true, // Keep notification pinned on screen until user interacts
     silent: false,
-    vibrate: [400, 150, 400, 150, 800],
+    vibrate: SOS_VIBRATE,
     data: {
       url: data.url || '/',
       incidentId: data.incidentId,
@@ -158,7 +171,7 @@ self.addEventListener('message', (event) => {
       renotify: true,
       requireInteraction: true,
       silent: false,
-      vibrate: [400, 150, 400, 150, 800],
+      vibrate: SOS_VIBRATE,
       data: { url: url || '/' },
     };
     self.registration.showNotification(title || 'EMERGENCY SOS ALERT', options);

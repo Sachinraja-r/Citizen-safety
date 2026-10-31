@@ -52,6 +52,49 @@ export function triggerEmergencyVibration(): boolean {
 }
 
 /**
+ * Triggers a prolonged SOS vibration pattern (~5 seconds) for emergency alert.
+ * Pattern: S-O-S in Morse code extended with long continuous bursts.
+ * Total duration ≈ 5200ms
+ * Intended for use when emergency contact opens the alert for the first time.
+ */
+export function triggerSosVibration(): boolean {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      // S = ... (3 short)  O = --- (3 long)  S = ... (3 short)
+      // short = 200ms, long = 600ms, gap between symbols = 200ms, gap between letters = 400ms
+      const S = [200, 100, 200, 100, 200]; // S in Morse
+      const letterGap = [400];
+      const O = [600, 100, 600, 100, 600]; // O in Morse
+      const pattern = [...S, ...letterGap, ...O, ...letterGap, ...S];
+      // Fill remaining time up to ~5s with strong continuous buzz
+      const used = pattern.reduce((a, b) => a + b, 0); // ~3900ms
+      const remaining = Math.max(0, 5000 - used);
+      if (remaining > 0) {
+        pattern.push(200, 100); // brief pause then final buzz
+        pattern.push(remaining - 300);
+      }
+      return navigator.vibrate(pattern);
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+/**
+ * Cancels any active vibration immediately.
+ */
+export function stopVibration(): void {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate(0);
+    } catch {
+      // ignore
+    }
+  }
+}
+
+/**
  * Plays the distinctive Emergency Alert Sound (EAS dual-tone: 853 Hz + 960 Hz).
  *
  * @param options.durationMs Duration in milliseconds (default: 4000ms)

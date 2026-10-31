@@ -11,6 +11,8 @@ import { formatIncidentType, formatRelativeTime, formatTimeOnly } from '../../ut
 import {
   playEmergencyAlertSound,
   stopEmergencyAlertSound,
+  triggerSosVibration,
+  stopVibration,
 } from '../../utils/emergencyAudio';
 import {
   MapPin,
@@ -37,6 +39,7 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
   const [isAcknowledging, setIsAcknowledging] = useState(false);
   const [contactName, setContactName] = useState('Trusted Contact');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [showAlarmOverlay, setShowAlarmOverlay] = useState(false);
 
   // 1. Validate Token and Fetch Authorized Incident Information
   useEffect(() => {
@@ -80,15 +83,41 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
     // Clean up audio on unmount
     return () => {
       stopEmergencyAlertSound();
+      stopVibration();
     };
   }, [id, token]);
+
+  // Auto-trigger buzzer alarm + 5-second SOS vibration when incident first loads
+  useEffect(() => {
+    if (!incident) return; // Wait until incident is confirmed valid
+
+    // Show the alarm overlay so user knows alarm is sounding
+    setShowAlarmOverlay(true);
+
+    // Trigger 5-second SOS vibration pattern immediately
+    triggerSosVibration();
+
+    // Attempt to play looping alarm — works if page was opened via tapped link/notification
+    playEmergencyAlertSound({ loop: true }).then((success) => {
+      setIsPlayingAudio(success);
+    });
+
+    // Auto-hide the "ALARM SOUNDING" overlay after 6 seconds, but keep audio
+    const overlayTimer = setTimeout(() => {
+      setShowAlarmOverlay(false);
+    }, 6000);
+
+    return () => clearTimeout(overlayTimer);
+  }, [incident?.id]); // Fires once when incident ID is first set
 
   // Attempt to play emergency alert sound on load or prompt user
   const handleToggleSound = async () => {
     if (isPlayingAudio) {
       stopEmergencyAlertSound();
+      stopVibration();
       setIsPlayingAudio(false);
     } else {
+      triggerSosVibration();
       const success = await playEmergencyAlertSound({ loop: true });
       setIsPlayingAudio(success);
     }
@@ -105,6 +134,7 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
     if (res.success) {
       setIsAcknowledged(true);
       stopEmergencyAlertSound();
+      stopVibration();
       setIsPlayingAudio(false);
     }
   };
@@ -160,6 +190,33 @@ export const EmergencyAlertRecipientPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FFF5F8] text-[#2D1B24] flex flex-col">
+      {/* Full-screen Alarm Overlay — auto-shown for 6s when alert opens */}
+      {showAlarmOverlay && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-red-600/95 backdrop-blur-sm animate-pulse"
+          onClick={() => {
+            setShowAlarmOverlay(false);
+          }}
+        >
+          <div className="text-white text-center px-6">
+            <div className="text-7xl mb-4 animate-bounce">🚨</div>
+            <h2 className="text-3xl font-black uppercase tracking-widest mb-2">
+              EMERGENCY ALERT
+            </h2>
+            <p className="text-lg font-bold opacity-90 mb-1">
+              Your contact is IN DANGER
+            </p>
+            <p className="text-sm opacity-75 mb-6">
+              Alarm &amp; vibration active — device is alerting you
+            </p>
+            <div className="flex items-center justify-center gap-2 text-xs font-bold bg-white/20 rounded-full px-4 py-2 border border-white/30">
+              <Volume2 className="w-4 h-4 animate-bounce" />
+              <span>Tap anywhere to dismiss this screen</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#F3D9E2] shadow-sm px-4 py-2.5">
         <div className="max-w-md mx-auto flex items-center justify-between">

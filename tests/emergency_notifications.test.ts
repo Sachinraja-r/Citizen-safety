@@ -357,4 +357,23 @@ describe('Emergency Notifications & Trusted Contact Alert Suite', () => {
     assert.ok(smsGroup.startsWith('sms:+919845011223'));
     assert.ok(smsGroup.includes('EMERGENCY'));
   });
+
+  // Scenario 17: Emergency Buzzer & 5-Second Vibration Synthesizer
+  test('17. Emergency alert audio and 5-second SOS vibration synthesizer functions operate safely', async () => {
+    const { triggerSosVibration, stopVibration, playEmergencyAlertSound, stopEmergencyAlertSound } = await import(
+      '../src/utils/emergencyAudio'
+    );
+
+    // Vibration triggers safely without throwing in test environment
+    const vibeTriggered = triggerSosVibration();
+    assert.strictEqual(typeof vibeTriggered, 'boolean');
+
+    // Stop vibration safely
+    assert.doesNotThrow(() => stopVibration());
+
+    // Emergency sound plays and stops without throwing
+    const soundRes = await playEmergencyAlertSound({ loop: false, durationMs: 100 });
+    assert.strictEqual(typeof soundRes, 'boolean');
+    assert.doesNotThrow(() => stopEmergencyAlertSound());
+  });
 });
